@@ -96,6 +96,7 @@ node thesium.mjs guide          # the engine's contract and recipes
 node thesium.mjs capture https://example.com   # real material: screenshots, text, brand, images
 node thesium.mjs still 1.5 4    # look at frames
 node thesium.mjs preview        # the whole film, low-res, with sheets and the frame check
+node thesium.mjs sound voice    # narration from audio/voice.json, transcribed and checked
 node thesium.mjs check          # contract, rules, determinism
 node thesium.mjs master         # out/my-film-v1.mp4
 node thesium.mjs studio         # review, pin notes, tune parameters
@@ -114,7 +115,7 @@ src/media/      FFmpeg: sheets, encoding, mastering
 src/review/     frame check, language check
 src/studio/     operations shared by CLI, MCP and the review studio (+ its page)
 src/mcp/        the MCP server
-kit/            copied into every film: web motion kit, EffectCraft T kit, synth
+kit/            copied into every film: web motion kit, EffectCraft T kit, synth, voice
 knowledge/      the Motion Library: direction, craft, review, sound, 18 video types,
                 43 style bibles, and a guide per engine
 skills/ agents/ .claude-plugin/   the Claude Code plugin
@@ -124,16 +125,21 @@ docs/           build log and design documents
 
 ## Status
 
-Early and moving fast. See [docs/PROGRESS.md](docs/PROGRESS.md) for what is built, what was
-verified, and what comes next.
+Version 0.1.0. All five engines are verified end to end (web, EffectCraft, Remotion, HyperFrames
+and command), and three example films were made with it. The test suite runs on every push on Linux
+with Node 22 and 24, and passes on Windows. [docs/PROGRESS.md](docs/PROGRESS.md) records what was
+built and verified; the [blueprint](docs/BLUEPRINT.md#18-roadmap) lists what comes next.
 
 ## Credits
 
 Thesium grew out of Vmotion. Its Motion Library adapts work by xilo (@xilo2991), Kianzzz
 (xilo-opus-video, MIT), LemoLab (Lemo-Opuscar style bibles, MIT), athemeroy (CC BY 4.0),
 yihui-dev (MIT) and makevoid (MIT); see [knowledge/THIRD_PARTY.md](knowledge/THIRD_PARTY.md).
-QR codes come from Project Nayuki's QR Code generator (MIT). Fonts are SIL Open Font License 1.1 ([fonts/README.md](fonts/README.md)). EffectCraft, Remotion
-and HyperFrames are separate projects under their own licences; Thesium only calls them.
+QR codes come from Project Nayuki's QR Code generator (MIT). Fonts are SIL Open Font License 1.1
+([fonts/README.md](fonts/README.md)). Narration uses Kokoro-82M (Apache-2.0) through kokoro-onnx
+(MIT) and the hearing check faster-whisper (MIT), both installed by you and run locally.
+EffectCraft, Remotion and HyperFrames are separate projects under their own licences; Thesium
+only calls them.
 
 ## License
 
