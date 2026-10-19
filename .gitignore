@@ -9,3 +9,14 @@ examples/*/review/
 examples/*/.thesium/
 # The original commission note stays local.
 first-contact.md
+# Per-machine files inside example films (recreated by `thesium sync`).
+examples/*/kit/
+examples/*/thesium.mjs
+examples/*/.thesium-build.jsx
+examples/*/AGENTS.md
+examples/*/CLAUDE.md
+# Example sound is regenerated from score.py and sfx.json.
+examples/*/audio/*.wav
+examples/*/audio/stems/
+examples/*/audio/*.timeline.json
+examples/parity.jpg
