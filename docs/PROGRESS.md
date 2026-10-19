@@ -98,8 +98,9 @@ Studio: notes with saved frames, tuned-parameter stills, versions, sections; scr
    `marketplace.json` (validated with `claude plugin validate`). The CLI moved from `bin/` to `cli/`
    because a top-level `bin/` blocks claude.ai/Cowork plugin installs. Still to do: `THIRD_PARTY.md`
    refresh for Thesium.
-3. Tests with `node:test` (manifest, sample times, parse size, framecheck on synthetic frames, CDP smoke,
-   EffectCraft smoke when installed, MCP handshake).
+3. Done: `npm test` (9 tests: manifest, sizes, motion-blur sampling, params, path containment, frame
+   check on synthetic frames, lint rules, an end-to-end web film through new/still/check, MCP handshake).
+   Still to add: an EffectCraft smoke test that skips when EffectCraft is not installed.
 4. The proof: a showcase film made with the EffectCraft engine through Thesium following the skill
    (plan → build → look → sound → check → master → critic → polish), ideally the same brief on the web
    engine to show parity. Fold any new recipe lessons back into the guide.
