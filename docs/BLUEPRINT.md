@@ -144,11 +144,21 @@ everything.
 | --- | --- | --- | --- |
 | `web` | `film/index.html` with `window.render(t)` and `window.ready` | Own CDP client: headless Chrome over `--remote-debugging-pipe`, one browser context per parallel slot, every request outside the loopback server blocked, fonts awaited, two animation frames per render | `window.THESIUM` injected into the page |
 | `effectcraft` | `film/build.jsx`, an AE-style script | Writes a wrapper (`THESIUM` facts, the kit, the film, a report) at the film root, runs `effectcraft-cli script` headless into a hashed `.ecproj` (rebuilt only when inputs change), verifies the comp and every text layer's font, renders frames in batches (`run … comp.saveFrameAs ×N`) and ranges as PNG sequences | `THESIUM.params`, `T.params` |
-| `remotion` | a Remotion project in `film/remotion` | The project's own `remotion still` / `render --sequence` | the `thesium` input prop |
+| `remotion` | a Remotion project in `film/remotion` | The project's own CLI: `remotion bundle` once per source state (hashed), then `remotion still` from the bundle (two at a time) and `render --sequence` | the `thesium` input prop |
 | `hyperframes` | a HyperFrames project in `film/hyperframes` | `hyperframes snapshot --at` and `render --format png-sequence` | `thesium-params.js` (rewritten per render) |
 | `command` | anything | Shell templates for `frame`, optionally `sequence` and `build` | a JSON file at `{params}` |
 
 Adding an engine is one file implementing the contract plus one guide in `knowledge/engines/`.
+
+**CLI-Anything, considered and not built in.** [CLI-Anything](https://github.com/HKUDS/CLI-Anything)
+turns desktop software into agent-usable CLIs. It does not change how engine-independent Thesium
+is: that comes from the frame contract, and every engine Thesium drives already has a native
+command line or script API. Its harnesses model a subset of each application (the Blender one keeps
+a JSON scene and emits a bpy script rather than rendering), which is a lower ceiling than the
+application's own scripting, and it would add Python and Click to a tool with no runtime
+dependencies. So Thesium supports it from the outside: any harness that writes a frame is a
+`command` engine, and harnesses for image and audio editors can prepare material
+(`knowledge/engines/command.md`).
 
 ## 7. Rendering services
 
@@ -263,6 +273,9 @@ On a 12-thread Windows 10 machine (CPU rendering):
 | EffectCraft: 30 s 1080p master of the showcase film (fractal fog, glows, 3D, 60 expression particles) | 527 s |
 | Test suite (12 tests: an end-to-end web film and EffectCraft film, MCP, QR) | ~6 s |
 | Web: the showcase film's 30 s master with 4 motion-blur samples (3,600 renders) | 145 s |
+| Web: the showcase film's 30 s master with 8 motion-blur samples (7,200 renders: WebGL fog, CSS 3D, SVG filters) | ~250 s |
+| Remotion 4.0.537: 3 stills of a 720p film, first bundle / bundle reused | 9.5 s / 5.3 s (41 s before bundling once) |
+| Remotion: 3 s preview at half scale | 5.9 s |
 
 ## 15. EffectCraft: what testing on it taught us
 

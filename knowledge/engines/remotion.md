@@ -42,5 +42,8 @@ is the kit's spring. `<Sequence from={…}>` gives each section local time. Soun
 
 ## Status
 
-The driver renders stills one at a time through the CLI (a bundle per call), so stills are slower
-than on the web engine; previews and masters render image sequences in one call.
+Verified with Remotion 4.0.537 (stills, tuned parameters, `check`, `preview`). Thesium bundles the
+project once per state of its sources (`remotion bundle` into `.thesium/remotion/<hash>`) and
+renders stills from the bundle two at a time (`engineOptions.remotion.parallel`, up to 3), so a
+still costs about 2 s instead of a fresh bundle each; previews and masters render image sequences in
+one call.

@@ -1,8 +1,9 @@
 // remotion: React components rendered frame by frame (remotion.dev). The film is a Remotion
 // project in film/remotion/ whose composition id is "Film". Thesium calls the project's own
 // Remotion CLI; it bundles nothing of Remotion. Remotion's license applies to its use.
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { run } from '../core/proc.js';
 import { inside } from '../core/paths.js';
@@ -20,6 +21,40 @@ const RULES = [
 function remotionBin(project) {
   const bin = path.join(project, 'node_modules', '.bin', process.platform === 'win32' ? 'remotion.cmd' : 'remotion');
   return existsSync(bin) ? bin : undefined;
+}
+
+const SHELL = process.platform === 'win32';
+let sessions = 0;
+
+/**
+ * Bundles the project once per state of its sources into .thesium/remotion/<hash>, so stills
+ * and sequences skip Remotion's per-call bundling (about 12 s a still on a small film).
+ * @param {string} workspace @param {string} dir @param {string} bin @param {AbortSignal} [signal]
+ */
+async function bundle(workspace, dir, bin, signal) {
+  const hash = createHash('sha256');
+  const walk = async (d) => {
+    const entries = (await readdir(d, { withFileTypes: true }).catch(() => [])).sort((a, b) => (a.name < b.name ? -1 : 1));
+    for (const e of entries) {
+      if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+      const f = path.join(d, e.name);
+      if (e.isDirectory()) await walk(f);
+      else {
+        const s = await stat(f);
+        hash.update(`${path.relative(dir, f)}:${s.size}:${s.mtimeMs}
+`);
+      }
+    }
+  };
+  await walk(dir);
+  const root = path.join(workspace, '.thesium', 'remotion');
+  const out = path.join(root, hash.digest('hex').slice(0, 16));
+  if (existsSync(path.join(out, 'index.html'))) return out;
+  await rm(out, { recursive: true, force: true });
+  await run(bin, ['bundle', 'src/index.tsx', `--out-dir=${out}`, '--log=error'], { cwd: dir, timeout: 600000, signal, shell: SHELL });
+  for (const old of await readdir(root).catch(() => []))
+    if (path.join(root, old) !== out) await rm(path.join(root, old), { recursive: true, force: true }).catch(() => {});
+  return out;
 }
 
 const PACKAGE = (m) =>
@@ -122,20 +157,21 @@ export const remotionEngine = {
     const dir = inside(workspace, m.entry);
     const bin = remotionBin(dir);
     if (!bin) throw new Error(`Remotion is not installed in ${m.entry}. Run: npm install (in ${m.entry})`);
-    const props = path.join(workspace, '.thesium', 'remotion-props.json');
+    const props = path.join(workspace, '.thesium', `remotion-props-${process.pid}-${sessions++}.json`);
     await mkdir(path.dirname(props), { recursive: true });
     await writeFile(props, JSON.stringify({ THESIUM: filmInfo(m, o.params) }));
     const scale = o.scale && o.scale > 0 ? o.scale : 1;
+    const served = await bundle(workspace, dir, bin, o.signal);
     const common = [`--props=${props}`, `--scale=${scale}`, '--log=error'];
     const rm_ = (p) => rm(p, { recursive: true, force: true });
     const frameOf = (t) => Math.min(Math.round(m.duration * m.fps) - 1, Math.max(0, Math.round(t * m.fps)));
     const still = async (t, out) => {
-      await run(bin, ['still', 'src/index.tsx', 'Film', out, `--frame=${frameOf(t)}`, '--image-format=png', ...common], { cwd: dir, timeout: 600000, signal: o.signal, shell: process.platform === 'win32' });
+      await run(bin, ['still', served, 'Film', out, `--frame=${frameOf(t)}`, '--image-format=png', ...common], { cwd: dir, timeout: 600000, signal: o.signal, shell: SHELL });
     };
     let n = 0;
     return {
       format: 'png',
-      parallel: 1,
+      parallel: Math.max(1, Math.min(3, Number(m.engineOptions?.remotion?.parallel) || 2)),
       async frame(t) {
         const out = path.join(workspace, '.thesium', `remotion-${process.pid}-${n++}.png`);
         await still(t, out);
@@ -148,11 +184,11 @@ export const remotionEngine = {
         await rm_(target);
         const a = Math.round(from * m.fps);
         const b = Math.round(to * m.fps) - 1;
-        await run(bin, ['render', 'src/index.tsx', 'Film', target, '--sequence', '--image-format=png', `--frames=${a}-${b}`, ...common], {
+        await run(bin, ['render', served, 'Film', target, '--sequence', '--image-format=png', `--frames=${a}-${b}`, ...common], {
           cwd: dir,
           timeout: 6 * 3600000,
           signal: o.signal,
-          shell: process.platform === 'win32',
+          shell: SHELL,
           onLine: (line) => {
             const mm = /(\d+)\s*\/\s*(\d+)/.exec(line);
             if (mm) onProgress?.(Number(mm[1]), Number(mm[2]));
@@ -162,7 +198,9 @@ export const remotionEngine = {
         for (let i = 0; i < files.length; i++) await rename(path.join(target, files[i]), path.join(target, `f_${String(i).padStart(6, '0')}.png`));
         return { pattern: path.join(target, 'f_%06d.png'), format: 'png' };
       },
-      async close() {},
+      async close() {
+        await rm_(props);
+      },
     };
   },
 };
