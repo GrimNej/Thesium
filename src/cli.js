@@ -27,6 +27,9 @@ Look
   check [--fast]                 contract, engine rules, language and determinism → PASS/FAIL
   frames <video> [--fps 30] [--key green] [--width px]
                                  frame-accurate (optionally keyed) sequence → assets/frames/<name>/
+  capture <url> [--images 24]    screenshots, text, brand cues and images of a page → assets/capture/<host>/
+  qr "<url>" [--out assets/qr.png|.svg] [--size 600] [--dark #000] [--light #fff]
+                                 a real, scannable QR code for a call to action
 
 Sound (Python 3 with numpy and scipy)
   sound score <script.py>        run a score script with the kit's synth on its path
@@ -180,6 +183,22 @@ export async function main(argv) {
         return print(await ops.master(workspace(), { draft: Boolean(flags.draft), log, onProgress: progress('frames') }));
       case 'review':
         return print(await ops.reviewPackage(workspace()));
+      case 'capture': {
+        const { capture } = await import('./studio/capture.js');
+        if (!args[0]) throw new Error('Usage: capture <url> [--images 24]');
+        return print(await capture(workspace(), args[0], { images: num(flags.images), log }));
+      }
+      case 'qr': {
+        const { qr } = await import('./studio/qr.js');
+        return print(
+          await qr(workspace(), args.join(' '), {
+            out: typeof flags.out === 'string' ? flags.out : undefined,
+            size: num(flags.size),
+            dark: typeof flags.dark === 'string' ? flags.dark : undefined,
+            light: typeof flags.light === 'string' ? flags.light : undefined,
+          }),
+        );
+      }
       case 'frames':
         if (!args[0]) throw new Error('Usage: frames <video> [--fps 30] [--key green|blue|#rrggbb] [--width px] [--name id]');
         return print(

@@ -12,3 +12,12 @@
 
 Further reading: guanmo-ai/awesome-ai-motion, JohnHeibel/ClaudeAnimationBase,
 JohnHeibel/PDoomVideo, francozanardi/papermotion.
+
+## Thesium itself
+
+| Material | Source | Licence | Used as |
+| --- | --- | --- | --- |
+| QR Code generator library | [nayuki/QR-Code-generator](https://github.com/nayuki/QR-Code-generator) | MIT © Project Nayuki | `src/vendor/qrcodegen.js` (compiled from TypeScript, unmodified) |
+| Fonts | Inter, Manrope, Space Grotesk, Unbounded, Bebas Neue, Fraunces, Instrument Serif, JetBrains Mono | SIL OFL 1.1 | `fonts/` (notices beside each family) |
+| Synthesiser and audio tools | Vmotion `studio-kit/synth.py`, `audiotools.py` (beat tracker adapted from Kianzzz/xilo-opus-video, MIT) | MIT | `kit/audio/` |
+

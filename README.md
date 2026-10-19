@@ -99,7 +99,7 @@ verified, and what comes next.
 Thesium grew out of Vmotion. Its Motion Library adapts work by xilo (@xilo2991), Kianzzz
 (xilo-opus-video, MIT), LemoLab (Lemo-Opuscar style bibles, MIT), athemeroy (CC BY 4.0),
 yihui-dev (MIT) and makevoid (MIT); see [knowledge/THIRD_PARTY.md](knowledge/THIRD_PARTY.md).
-Fonts are SIL Open Font License 1.1 ([fonts/README.md](fonts/README.md)). EffectCraft, Remotion
+QR codes come from Project Nayuki's QR Code generator (MIT). Fonts are SIL Open Font License 1.1 ([fonts/README.md](fonts/README.md)). EffectCraft, Remotion
 and HyperFrames are separate projects under their own licences; Thesium only calls them.
 
 ## License
