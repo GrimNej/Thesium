@@ -15,6 +15,7 @@ and identical on every engine:
 
 | | |
 | --- | --- |
+| **Material** | web pages captured as screenshots, text, brand cues and images with provenance; real QR codes; frame-accurate video clips |
 | **Eyes** | exact stills (with the master's motion blur), strips across cuts, phone-size reading copies, contact sheets, low-res previews |
 | **Ears** | original scores and SFX written in code (numpy synth), beat tracking, loudness and spectrum checks for sound the model cannot hear |
 | **Gate** | contract checks, a determinism test (frames rendered in two orders must match), an automatic frame check for empty bands and flat fields, an on-screen language check, technical QA of the master |
@@ -61,6 +62,7 @@ the brief to a master. Or drive it yourself:
 thesium new my-film --engine effectcraft --size 16:9 --duration 30 --title "My film"
 cd my-film
 node thesium.mjs guide          # the engine's contract and recipes
+node thesium.mjs capture https://example.com   # real material: screenshots, text, brand, images
 node thesium.mjs still 1.5 4    # look at frames
 node thesium.mjs preview        # the whole film, low-res, with sheets and the frame check
 node thesium.mjs check          # contract, rules, determinism
