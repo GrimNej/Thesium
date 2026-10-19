@@ -9,7 +9,7 @@ import path from 'node:path';
 import { run } from '../core/proc.js';
 import { FONT_DIR, inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
-import { scan } from './index.js';
+import { scan } from './rules.js';
 
 const WRAPPER = '.thesium-build.jsx';
 

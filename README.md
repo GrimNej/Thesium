@@ -8,6 +8,15 @@ HyperFrames, or any tool with a command line.
 > The engine should not decide how good the film is. The model does the creative work; Thesium
 > gives it the same eyes, ears and quality gate on every engine.
 
+## Made with Thesium
+
+[![Thesium, a 30 s launch film made on EffectCraft](docs/media/thesium-launch-poster.jpg)](docs/media/thesium-launch-effectcraft.mp4)
+
+**"Thesium"**, a 30-second launch film directed through Thesium on **EffectCraft**: fractal fog,
+a playhead that carries through every shot, a lit 3D wall of real renders, liquid type, an original
+score. [Watch it](docs/media/thesium-launch-effectcraft.mp4) · [its source and making-of](examples/thesium-launch/)
+· [the same film on the web engine](examples/thesium-launch-web/).
+
 ## How it works
 
 Thesium asks one thing of a renderer: **draw the frame at time `t`**. Everything else is Thesium's
@@ -21,6 +30,7 @@ and identical on every engine:
 | **Gate** | contract checks, a determinism test (frames rendered in two orders must match), an automatic frame check for empty bands and flat fields, an on-screen language check, technical QA of the master |
 | **Finish** | full-quality render, stems mixed and normalised to −14 LUFS, AAC peak guard, poster and review sheets |
 | **Fresh eyes** | a critic subagent that did not make the film reviews it against a rubric and a craft floor |
+| **Design** | the [blueprint](docs/BLUEPRINT.md): principles, the engine contract, every subsystem, measurements |
 | **The person** | a local review studio: play any version, pin notes on the timeline (each saves its frame), tune the parameters the director exposed on a real frame |
 
 ## Engines
@@ -56,7 +66,13 @@ Thesium has no runtime npm dependencies.
 ## Use
 
 Ask Claude for a film ("a 30-second launch film for … in EffectCraft"). The skill takes it from
-the brief to a master. Or drive it yourself:
+the brief to a master. Or from a terminal, in one command (runs a headless Claude Code director):
+
+```
+thesium make "a 30-second launch film for https://example.com, warm and cinematic" --engine effectcraft
+```
+
+Or drive the studio yourself:
 
 ```
 thesium new my-film --engine effectcraft --size 16:9 --duration 30 --title "My film"

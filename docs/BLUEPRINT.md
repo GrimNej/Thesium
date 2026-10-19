@@ -20,7 +20,8 @@ the agents that will work inside it.
 - [14. Measured performance](#14-measured-performance)
 - [15. EffectCraft: what testing on it taught us](#15-effectcraft-what-testing-on-it-taught-us)
 - [16. What Thesium keeps from Vmotion, and what it drops](#16-what-thesium-keeps-from-vmotion-and-what-it-drops)
-- [17. Roadmap](#17-roadmap)
+- [17. Material and autonomy](#17-material-and-autonomy)
+- [18. Roadmap](#18-roadmap)
 
 ## 1. The problem
 
@@ -260,7 +261,8 @@ On a 12-thread Windows 10 machine (CPU rendering):
 | EffectCraft: 7 full-resolution stills of the showcase film | ~6 s |
 | EffectCraft: 30 s preview of the showcase film at half scale | 120 s |
 | EffectCraft: 30 s 1080p master of the showcase film (fractal fog, glows, 3D, 60 expression particles) | 527 s |
-| Test suite (10 tests, one end-to-end web film) | 1.4 s |
+| Test suite (12 tests: an end-to-end web film and EffectCraft film, MCP, QR) | ~6 s |
+| Web: the showcase film's 30 s master with 4 motion-blur samples (3,600 renders) | 145 s |
 
 ## 15. EffectCraft: what testing on it taught us
 
@@ -292,13 +294,24 @@ SDK orchestration, provider abstraction, vector database and embeddings, the cla
 pipeline and "DNA" retrieval (Vmotion's own history showed the autonomous studio beat it), Playwright,
 sharp, and runtime dependencies on Remotion and HyperFrames.
 
-## 17. Roadmap
+## 17. Material and autonomy
 
-1. Asset capture from web pages (screenshots, images, text, brand colours) and real QR codes for
-   calls to action, both recorded in `assets/SOURCES.md`.
-2. A `thesium make "<brief>"` runner that starts a headless director session for people who do not
-   use an agent directly.
-3. Engine parity benchmark: the same brief on every engine, scored by the critic, published.
-4. Text-to-speech for narration through a local model.
-5. EffectCraft: re-test the "avoid" list on each release; use `--progress` when available.
-6. A Linux and macOS CI run of the test suite (Chrome and FFmpeg in the image).
+- `capture <url>` opens the page in headless Chrome (network allowed only here, never while
+  rendering; private-network addresses refused), scrolls so lazy images load, and saves a viewport
+  screenshot, a full-page screenshot, the text (headings, paragraphs, links), brand cues (fonts,
+  most-used colours, the primary button) and the page's images, with provenance rows in
+  `assets/SOURCES.md`.
+- `qr "<url>"` writes a real code (Project Nayuki's MIT generator, vendored) as PNG or SVG in any
+  colours, with the quiet zone; verified with an independent decoder.
+- `make "<request>"` creates the film folder and runs Claude Code headless in it with
+  `--plugin-dir` pointing at this install, so the session has the skill, the critic and the MCP
+  server; edits inside the folder and `node thesium.mjs` commands are pre-approved, progress streams
+  to the terminal.
+
+## 18. Roadmap
+
+1. Engine parity benchmark: the same brief on every engine, scored by the critic, published
+   (started: `examples/thesium-launch` and `examples/thesium-launch-web`).
+2. Text-to-speech for narration through a local model.
+3. EffectCraft: re-test the "avoid" list on each release; use `--progress` when available.
+4. A Linux and macOS CI run of the test suite (Chrome and FFmpeg in the image).

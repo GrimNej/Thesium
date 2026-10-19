@@ -9,7 +9,7 @@ import { run } from '../core/proc.js';
 import { inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
 import { ensurePackage } from '../core/vendor.js';
-import { scan } from './index.js';
+import { scan } from './rules.js';
 
 const RULES = [
   { pattern: /Math\.random\s*\(/, level: 'error', message: 'Math.random() makes frames unrepeatable; use a seeded generator' },
@@ -20,7 +20,10 @@ const RULES = [
 
 /** The command that runs the HyperFrames CLI. */
 async function cli() {
-  if (process.env.THESIUM_HYPERFRAMES) return { command: process.env.THESIUM_HYPERFRAMES, prefix: [] };
+  if (process.env.THESIUM_HYPERFRAMES) {
+    const command = process.env.THESIUM_HYPERFRAMES;
+    return { command, prefix: [], shell: process.platform === 'win32' && /\.(cmd|bat)$/i.test(command) };
+  }
   const exe = process.platform === 'win32' ? 'hyperframes.cmd' : 'hyperframes';
   for (const dir of (process.env.PATH || '').split(path.delimiter))
     if (dir && existsSync(path.join(dir, exe))) return { command: path.join(dir, exe), prefix: [], shell: process.platform === 'win32' };

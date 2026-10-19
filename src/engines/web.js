@@ -8,7 +8,7 @@ import { serve } from '../browser/server.js';
 import { FONT_DIR, inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
 import { vendorSetup } from '../core/vendor.js';
-import { scan } from './index.js';
+import { scan } from './rules.js';
 
 const RULES = [
   { pattern: /Math\.random\s*\(/, level: 'error', message: 'Math.random() makes frames unrepeatable; use rand(seed) from /kit/web/motion.js' },

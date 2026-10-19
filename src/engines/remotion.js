@@ -7,7 +7,7 @@ import path from 'node:path';
 import { run } from '../core/proc.js';
 import { inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
-import { scan } from './index.js';
+import { scan } from './rules.js';
 
 const RULES = [
   { pattern: /Math\.random\s*\(/, level: 'error', message: "Math.random() makes frames unrepeatable; use random(seed) from 'remotion'" },

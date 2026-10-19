@@ -2,7 +2,7 @@
 // source material leaked into the film (Chinese characters in an English promo, say).
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { stripComments } from '../engines/index.js';
+import { stripComments } from '../engines/rules.js';
 
 const SCRIPTS = /** @type {const} */ ([
   ['Chinese or Japanese', /[぀-ヿ㐀-䶿一-鿿]/g],
