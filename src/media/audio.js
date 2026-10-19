@@ -170,7 +170,9 @@ export async function mixAudio(workspace, m, output, o = {}) {
     ? 'anull'
     : `loudnorm=${target}:measured_I=${measured.input_i}:measured_TP=${measured.input_tp}:measured_LRA=${measured.input_lra}:measured_thresh=${measured.input_thresh}:offset=${measured.target_offset}:linear=true`;
   // A brick-wall limiter after loudness: dense synthesized scores otherwise overshoot in AAC.
-  await ff(['-i', mixed, '-af', `${normalize},alimiter=limit=0.708:attack=1:release=60:level=0:asc=1`, '-ar', '48000', '-t', String(d), output], {
+  // The last 0.4 s fade out, so a chord still ringing at the final frame does not click off.
+  const fade = Math.min(0.4, d / 4);
+  await ff(['-i', mixed, '-af', `${normalize},alimiter=limit=0.708:attack=1:release=60:level=0:asc=1,afade=t=out:st=${(d - fade).toFixed(3)}:d=${fade}`, '-ar', '48000', '-t', String(d), output], {
     timeout: 600000,
     signal: o.signal,
   });
