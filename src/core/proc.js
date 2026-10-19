@@ -10,6 +10,7 @@ import { spawn } from 'node:child_process';
  * @property {(line: string) => void} [onLine] called for each stdout/stderr line
  * @property {boolean} [binary] resolve stdout as a Buffer
  * @property {boolean} [shell] run through the platform shell (needed for .cmd launchers on Windows)
+ * @property {boolean} [verbatim] pass arguments to the program unquoted on Windows (cmd.exe /s /c "…")
  */
 
 /**
@@ -36,6 +37,7 @@ export function run(command, args, options = {}) {
           env: options.env ? { ...process.env, ...options.env } : process.env,
           stdio: ['pipe', 'pipe', 'pipe'],
           windowsHide: true,
+          windowsVerbatimArguments: options.verbatim,
         });
     /** @type {Buffer[]} */
     const out = [];

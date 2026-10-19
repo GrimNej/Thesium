@@ -26,7 +26,7 @@ function fill(template, values) {
 async function sh(line, cwd, signal) {
   const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
   const args = process.platform === 'win32' ? ['/d', '/s', '/c', `"${line}"`] : ['-c', line];
-  return run(shell, args, { cwd, timeout: 3600000, signal });
+  return run(shell, args, { cwd, timeout: 3600000, signal, verbatim: true });
 }
 
 /** @type {import('./index.js').Engine} */

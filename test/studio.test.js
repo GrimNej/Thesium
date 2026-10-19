@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +40,26 @@ test('a web film renders stills and passes check', { skip: !(await findChrome())
     await writeFile(path.join(film, 'film', 'index.html'), PAGE);
     assert.equal(await quiet(() => main(['--workspace', film, 'still', '0.5', '1.5'])), 0);
     assert.ok(existsSync(path.join(film, 'review', 'still-0.50.jpg')));
+    assert.equal(await quiet(() => main(['--workspace', film, 'check'])), 0);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('a command-engine film renders through quoted shell templates and passes check', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'thesium-cmd-'));
+  const film = path.join(dir, 'film with space');
+  try {
+    assert.equal(await quiet(() => main(['new', film, '--engine', 'command', '--size', '640x360', '--duration', '2', '--title', 'Command test'])), 0);
+    const manifest = JSON.parse(await readFile(path.join(film, 'thesium.json'), 'utf8'));
+    // FFmpeg stands in for a renderer: a square that moves with the frame number.
+    manifest.engineOptions.command = {
+      frame: 'ffmpeg -v error -y -f lavfi -i color=c=0x203040:s={width}x{height}:d=1 -vf "drawbox=x=40+{frame}*8:y=150:w=60:h=60:color=white:t=fill" -frames:v 1 "{out}"',
+      parallel: 2,
+    };
+    await writeFile(path.join(film, 'thesium.json'), JSON.stringify(manifest));
+    assert.equal(await quiet(() => main(['--workspace', film, 'still', '0.5', '1.5'])), 0);
+    assert.ok(existsSync(path.join(film, 'review', 'still-1.50.jpg')));
     assert.equal(await quiet(() => main(['--workspace', film, 'check'])), 0);
   } finally {
     await rm(dir, { recursive: true, force: true });

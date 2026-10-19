@@ -41,8 +41,7 @@ async function bundle(workspace, dir, bin, signal) {
       if (e.isDirectory()) await walk(f);
       else {
         const s = await stat(f);
-        hash.update(`${path.relative(dir, f)}:${s.size}:${s.mtimeMs}
-`);
+        hash.update(`${path.relative(dir, f)}:${s.size}:${s.mtimeMs}\n`);
       }
     }
   };
