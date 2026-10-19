@@ -54,7 +54,9 @@ T.glow(title, { threshold: 60, radius: 60, intensity: 0.9 });
 Property paths are EffectCraft's: `transform/position`, `transform/scale`, `transform/rotation`,
 `transform/opacity`, `transform/anchor`, `transform/orientation`, `transform/rotationX|Y`,
 `effects/#2/radius`, `contents/trim/end`, `contents/group/contents/stroke/color`,
-`text/animators/animator/selectors/rangeSelector/start`, `materialOptions/castsShadows`.
+`text/animators/animator/selectors/rangeSelector/start`, `materialOptions/castsShadows`; cameras and
+lights: `transform/poi`, `cameraOptions/zoom|dof|focusDistance|aperture`,
+`lightOptions/intensity|color|coneAngle|castsShadows|shadowDiffusion`.
 `thesium build` errors name the bad path; `effectcraft-cli props <comp> <layer> --flat` lists them.
 
 ## Craft in EffectCraft terms
@@ -87,6 +89,33 @@ Property paths are EffectCraft's: `transform/position`, `transform/scale`, `tran
 | Embers, dust, sparks | Many tiny shape layers with position expressions: `seedRandom(i, true); var sp = random(60, 220); …` (deterministic), an adjustment layer with Glow on top |
 | Light passing over metal type | `CC Light Sweep {direction: -25, width: 60–90, sweepIntensity: 200+, edgeIntensity: 250+}` with `center` keyed across |
 | Trails | `Echo {echoTime: -0.03, numberOfEchoes: 12}` on a **precomp** (scene) layer |
+
+## Recipes from the showcase film (`examples/thesium-launch`)
+
+| Look | How |
+| --- | --- |
+| A live clock on screen | `T.expr(text, "text/sourceText", '"t = " + time.toFixed(2)')` |
+| A label that sizes itself | A `rounded` shape whose `contents/group/contents/rect/size` expression reads `thisComp.layer("Label").sourceRectAtTime(time, false)`; position both from the element they ride on |
+| A line that wipes scenes | `Linear Wipe` on the incoming layer with `completion` keyed in step with the line's x: angle 90 hides from the left (`completion = x / W × 100` shows what is right of the line), angle 270 hides from the right (`100 − x / W × 100` shows what is left of it). Text and shape layers' wipe bounds are comp-wide, centred on the layer |
+| A glint inside letters | A blurred white bar (`blend: "Add"`) under a copy of the title, `T.matte(bar, copy, "alpha")`. Subtle on near-white type; give the type a little headroom (`#dcd8cf`) |
+| A breath of light | Key the title's Glow `intensity` 0.75 → 1.5 → 0.75 on a downbeat |
+| A slam into a cut | Scale 175–250% → 100% with `expo` over 0.5 s, opacity 0 → 100 in 0.08 s, on the downbeat |
+| A curved wall of images | Image layers `T.three`, scale ~30%, columns spread on x with `rotationY` and z growing towards the edges, a Spot plus Ambient light, a camera dolly; no stage solid so the world shows behind |
+
+## Gotchas learned the hard way
+
+- **One keyframe holds forever.** `T.key(l, p, [[25.6, 90, "hold"]])` sets 90 for the whole film. Start
+  with an explicit key at 0: `[[0, 0], [25.6, 90, "hold"]]`. The same applies to effect parameters
+  you only want to change late.
+- **Thin lines and motion blur.** A 3–4 px line moving fast smears into near-invisibility at a 180°
+  shutter. Leave motion blur off on precise, thin instruments (playheads, rules, cursors).
+- **Track mattes need the matte above.** Create the matte copy after the layer it mattes.
+- **Text reveals** (`T.reveal`) slide a ramp across the text with `offset`, so the text is fully hidden
+  before `t0` and fully at rest after `t0 + duration`. Put a layer's `in` a little before `t0`.
+- **Scenes change the active comp.** Use `T.scene`/`T.within` rather than `app.project.items.addComp`
+  directly, or new layers land in the wrong comp.
+- **Camera and light paths** are `transform/poi`, `cameraOptions/*`, `lightOptions/*` (not
+  `pointOfInterest`).
 
 ## Avoid on 0.11.1
 

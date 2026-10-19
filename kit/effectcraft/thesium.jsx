@@ -249,7 +249,15 @@ var T = (function () {
 
   // ── Properties and keyframes ──────────────────────────────────────────────
   /** Sets a static value by path ("transform/position", "effects/#1/radius", "contents/trim/end"…). */
-  function set(layer, path, value) { app.run("prop.set", { layer: layer.id, path: path, value: value }); return layer; }
+  /** Runs an engine command about one layer, naming the layer and path when it fails. */
+  function on(layer, path, id, params) {
+    try {
+      return app.run(id, params);
+    } catch (e) {
+      throw new Error(String(e.message || e) + ' (layer "' + layer.name + '" in "' + current.name + '", path ' + path + ")");
+    }
+  }
+  function set(layer, path, value) { on(layer, path, "prop.set", { layer: layer.id, path: path, value: value }); return layer; }
   function get(layer, path, t) { return app.run("prop.get", t === undefined ? { layer: layer.id, path: path } : { layer: layer.id, path: path, time: t }).value; }
   /** [outInfluence of the earlier key, inInfluence of the later key] for each named feel. */
   var FEEL = {
@@ -265,7 +273,7 @@ var T = (function () {
     feel = feel || "out";
     var start = layer.startTime || 0;
     for (var i = 0; i < keys.length; i++)
-      app.run("prop.addKey", { layer: layer.id, path: path, time: keys[i][0], timeBase: "comp", value: keys[i][1] });
+      on(layer, path, "prop.addKey", { layer: layer.id, path: path, time: keys[i][0], timeBase: "comp", value: keys[i][1] });
     for (var j = 1; j < keys.length; j++) {
       var f = keys[j][2] || feel;
       var a = keys[j - 1][0] - start, b = keys[j][0] - start;
@@ -298,7 +306,7 @@ var T = (function () {
     times.push(t1);
     var start = layer.startTime || 0;
     for (var i = 0; i < times.length; i++)
-      app.run("prop.addKey", { layer: layer.id, path: path, time: times[i], timeBase: "comp", value: fn(times[i]) });
+      on(layer, path, "prop.addKey", { layer: layer.id, path: path, time: times[i], timeBase: "comp", value: fn(times[i]) });
     var sel = [];
     for (var k = 0; k < times.length; k++) sel.push({ layer: layer.id, path: path, time: times[k] - start });
     app.run("keys.select", { keys: sel });
@@ -319,7 +327,7 @@ var T = (function () {
     }, t0, t0 + duration, o);
   }
   /** An expression (JavaScript, After Effects object model: time, value, wiggle, thisComp…). */
-  function expr(layer, path, code) { app.run("prop.setExpression", { layer: layer.id, path: path, expression: code }); return layer; }
+  function expr(layer, path, code) { on(layer, path, "prop.setExpression", { layer: layer.id, path: path, expression: code }); return layer; }
 
   // ── Effects ──────────────────────────────────────────────────────────────
   /**
@@ -389,10 +397,15 @@ var T = (function () {
     var by = { chars: 0, words: 2, lines: 3 }[o.by || "chars"];
     var sel = base + "/selectors/rangeSelector";
     set(layer, sel + "/advanced/basedOn", by);
-    set(layer, sel + "/advanced/shape", 1); // ramp up: units ahead of the edge stay at `from`
+    // A ramp of `spread` % slides across the text: units after the ramp are fully at `from`
+    // (hidden), units before it are at rest. Offset −spread: everything hidden; 100: all at rest.
+    var spread = o.spread === undefined ? 40 : o.spread;
+    set(layer, sel + "/advanced/shape", 1); // ramp up
     set(layer, sel + "/advanced/smoothness", o.smoothness === undefined ? 100 : o.smoothness);
+    set(layer, sel + "/start", 0);
+    set(layer, sel + "/end", spread);
     var d = o.duration || 0.9;
-    key(layer, sel + "/start", [[t0, 0], [t0 + d, 100, o.feel || "out"]]);
+    key(layer, sel + "/offset", [[t0, -spread], [t0 + d, 100, o.feel || "out"]]);
     return layer;
   }
 
