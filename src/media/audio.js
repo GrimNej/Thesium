@@ -70,15 +70,18 @@ export async function decodedPeakDb(file) {
 
 /**
  * Muxes picture and (optional) sound into the delivery MP4 of exactly `duration` seconds.
- * Lowers the AAC gain in steps until the decoded peak is below -0.3 dBFS.
+ * AAC encoding can push inter-sample peaks over the limiter, so the encoded file's true peak
+ * (EBU R128, oversampled) is measured and the gain lowered in small steps until it is at or
+ * below `truePeak`.
  * @param {string} picture silent H.264
  * @param {string | undefined} sound normalised WAV
  * @param {string} output
  * @param {number} duration
  * @param {(line: string) => void} [log]
+ * @param {number} [truePeak] dBTP ceiling for the delivered sound
  */
-export async function mux(picture, sound, output, duration, log) {
-  for (const gain of sound ? [0, -1.5, -3, -4.5] : [0]) {
+export async function mux(picture, sound, output, duration, log, truePeak = -1) {
+  for (const gain of sound ? [0, -0.5, -1, -1.5, -2, -3, -4.5] : [0]) {
     const args = ['-i', picture];
     if (sound) args.push('-i', sound);
     args.push('-map', '0:v');
@@ -86,9 +89,9 @@ export async function mux(picture, sound, output, duration, log) {
     args.push('-c:v', 'copy', '-t', String(duration), '-movflags', '+faststart', output);
     await ff(args, { timeout: 600000 });
     if (!sound) return;
-    const peak = await decodedPeakDb(output);
-    if (peak === undefined || peak < -0.3) return;
-    log?.(`encoded audio peaks at ${peak.toFixed(2)} dBFS; re-encoding ${(gain - 1.5).toFixed(1)} dB lower`);
+    const measured = (await loudness(output)).truePeakDbfs;
+    if (measured === undefined || measured <= truePeak) return;
+    log?.(`encoded audio reaches ${measured.toFixed(2)} dBTP; re-encoding lower`);
   }
 }
 

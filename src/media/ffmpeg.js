@@ -223,11 +223,19 @@ export async function* rawFrames(input, o) {
   const size = width * height * 3;
   let pending = Buffer.alloc(0);
   let index = 0;
-  for await (const chunk of child.stdout) {
-    pending = pending.length ? Buffer.concat([pending, chunk]) : chunk;
-    while (pending.length >= size) {
-      yield { index: index++, rgb: pending.subarray(0, size), width, height };
-      pending = pending.subarray(size);
+  try {
+    for await (const chunk of child.stdout) {
+      pending = pending.length ? Buffer.concat([pending, chunk]) : chunk;
+      while (pending.length >= size) {
+        yield { index: index++, rgb: pending.subarray(0, size), width, height };
+        pending = pending.subarray(size);
+      }
+    }
+  } finally {
+    // A caller that stops early must not leave FFmpeg holding the file open (Windows locks it).
+    if (child.exitCode === null) {
+      child.kill();
+      await new Promise((resolve) => child.once('close', resolve));
     }
   }
 }

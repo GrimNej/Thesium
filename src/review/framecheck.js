@@ -46,11 +46,16 @@ function band(L, w, h, edge) {
   return innerMean - edgeMean > 12 ? n / count : 0;
 }
 
-/** Share of the frame made of featureless, non-black cells (an empty panel or colour field). */
+/**
+ * Share of the frame covered by one featureless, non-black colour (an empty panel or colour
+ * field). Cells are flat when they have no detail; flat cells only count together when they are
+ * the same colour, so a soft gradient or fog that changes across the frame is not "empty".
+ */
 function flatShare(rgb, w, h) {
   const rows = 6;
   const cols = 8;
-  let flat = 0;
+  /** @type {number[][]} */
+  const flatColours = [];
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++) {
       const x0 = Math.floor((c * w) / cols);
@@ -74,9 +79,16 @@ function flatShare(rgb, w, h) {
       const stdMean = (std[0] + std[1] + std[2]) / 3;
       const lit = (mean[0] + mean[1] + mean[2]) / 3 > 14;
       const coloured = Math.max(...mean) - Math.min(...mean) > 6;
-      if (stdMean < 3.5 && (lit || coloured)) flat++;
+      if (stdMean < 3.5 && (lit || coloured)) flatColours.push(mean);
     }
-  return flat / (rows * cols);
+  // The largest group of flat cells within a small colour distance of each other.
+  let largest = 0;
+  for (const a of flatColours) {
+    let same = 0;
+    for (const b of flatColours) if (Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 6) same++;
+    largest = Math.max(largest, same);
+  }
+  return largest / (rows * cols);
 }
 
 /** @param {Buffer} rgb @param {number} w @param {number} h */

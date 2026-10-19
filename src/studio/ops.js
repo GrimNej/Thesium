@@ -224,7 +224,7 @@ export async function master(ws, o = {}) {
   );
   const sound = await mixAudio(ws, m, path.join(cache, `${name}.wav`), { signal: o.signal });
   const output = path.join(outDir, `${name}.mp4`);
-  await mux(picture, sound, output, m.duration, o.log);
+  await mux(picture, sound, output, m.duration, o.log, m.audio.truePeak);
   await rm(picture, { force: true });
   if (sound) await rm(sound, { force: true });
   const qa = await inspect(ws, m, output, path.join(outDir, `${name}-qa`), { expectSound: Boolean(sound) });
@@ -265,6 +265,8 @@ export async function inspect(ws, m, file, dir, o) {
   if (info.audio) {
     sound = { ...(await loudness(file)), peakDb: await decodedPeakDb(file) };
     if (sound.peakDb !== undefined && sound.peakDb >= -0.05) issues.push(`Audio peaks at ${sound.peakDb.toFixed(2)} dBFS and clips`);
+    if (sound.truePeakDbfs !== undefined && sound.truePeakDbfs > m.audio.truePeak + 0.2)
+      issues.push(`True peak ${sound.truePeakDbfs} dBTP is above the ${m.audio.truePeak} dBTP target`);
     if (sound.integratedLufs !== undefined && Math.abs(sound.integratedLufs - m.audio.loudness) > 2)
       issues.push(`Loudness ${sound.integratedLufs} LUFS, target ${m.audio.loudness}`);
   }

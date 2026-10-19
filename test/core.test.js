@@ -60,10 +60,42 @@ test('frame check finds flat frames and edge bands, and passes busy pictures', (
   assert.ok(banded.some((i) => i.includes('left edge')), banded.join('; '));
 });
 
+test('frame check flags one uniform panel but not a soft gradient world', () => {
+  const w = 96, h = 54;
+  const frame = (fn) => {
+    const rgb = Buffer.alloc(w * h * 3);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) rgb.set(fn(x, y), (y * w + x) * 3);
+    return rgb;
+  };
+  const noisy = (x, y) => { const v = (x * 37 + y * 91 + ((x * y) % 13) * 17) % 255; return [v, (v * 3) % 255, (v * 7) % 255]; };
+  // Left half detailed, right half one flat teal panel: an empty field.
+  const panel = inspectFrame(frame((x, y) => (x < w / 2 ? noisy(x, y) : [20, 90, 110])), w, h);
+  assert.ok(panel.some((i) => i.startsWith('large empty area')), panel.join('; '));
+  // A smooth dark fog that changes colour across the frame is a world, not an empty panel.
+  const fog = inspectFrame(frame((x, y) => [8 + x * 0.5, 20 + y * 1.6 + x * 0.4, 40 + x * 0.9]), w, h);
+  assert.ok(!fog.some((i) => i.startsWith('large empty area')), fog.join('; '));
+});
+
 test('engine rules ignore comments and catch real violations', () => {
   const rules = [{ pattern: /Math\.random\s*\(/, level: 'error', message: 'random' }];
   assert.equal(scan('// Math.random()\nconst x = 1;', 'a.js', /** @type {any} */ (rules)).length, 0);
   assert.equal(scan('const x = Math.random();', 'a.js', /** @type {any} */ (rules)).length, 1);
   assert.equal(stripComments('a /* b */ c // d').trim(), 'a  c');
   assert.equal(stripComments("const u = 'https://x.y/z';").includes('https://x.y/z'), true);
+});
+
+test('qr writes a real code with a quiet zone', async () => {
+  const { mkdtemp, readFile, rm } = await import('node:fs/promises');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const { qr } = await import('../src/studio/qr.js');
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'thesium-qr-'));
+  try {
+    const r = await qr(dir, 'https://github.com/GrimNej/Thesium', { out: 'qr.svg' });
+    assert.match(r.text, /version 3 \(29×29 modules/);
+    const svg = await readFile(path.join(dir, 'qr.svg'), 'utf8');
+    assert.match(svg, /viewBox="0 0 37 37"/); // 29 modules + 4 quiet-zone modules on each side
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
