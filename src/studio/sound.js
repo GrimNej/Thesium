@@ -1,39 +1,20 @@
-// Sound tools: scores and SFX written in code (kit/audio/synth.py), beat tracking and checks
-// for sound the director cannot hear. Python with numpy and scipy runs the synthesis.
-import { existsSync } from 'node:fs';
+// Sound tools: scores and SFX written in code (kit/audio/synth.py), narration (voice.js), beat
+// tracking and checks for sound the director cannot hear. Python with numpy and scipy runs the
+// synthesis.
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { run } from '../core/proc.js';
 import { inside, rel } from '../core/paths.js';
 import { audioPictures, loudness } from '../media/audio.js';
-
-const python = () => process.env.THESIUM_PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
-
-/** @param {string} ws @param {string[]} args */
-async function py(ws, args) {
-  const kit = path.join(ws, 'kit', 'audio');
-  if (!existsSync(path.join(kit, 'synth.py'))) throw new Error('The film has no kit/audio; run: node thesium.mjs sync');
-  try {
-    const { stdout, stderr } = await run(python(), args, {
-      cwd: ws,
-      timeout: 900000,
-      env: { PYTHONPATH: [kit, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter), PYTHONIOENCODING: 'utf-8' },
-    });
-    return (stdout + stderr).trim();
-  } catch (error) {
-    const message = /** @type {Error} */ (error).message;
-    if (/No module named '(numpy|scipy)'/.test(message)) throw new Error(`Sound tools need numpy and scipy: ${python()} -m pip install numpy scipy`);
-    throw error;
-  }
-}
+import { py } from './python.js';
 
 /**
  * @param {string} ws
- * @param {string | undefined} action score | sfx | beats | check
+ * @param {string | undefined} action score | sfx | voice | voices | beats | check
  * @param {string[]} args
+ * @param {{ log?: (s: string) => void }} [o]
  * @returns {Promise<{ text: string, files: string[] }>}
  */
-export async function sound(ws, action, args) {
+export async function sound(ws, action, args, o = {}) {
   const kit = (f) => path.join(ws, 'kit', 'audio', f);
   switch (action) {
     case 'score': {
@@ -46,6 +27,14 @@ export async function sound(ws, action, args) {
       const out = inside(ws, args[1] || 'audio/sfx.wav');
       await mkdir(path.dirname(out), { recursive: true });
       return { text: await py(ws, [kit('synth.py'), 'sfx', spec, out]), files: [out] };
+    }
+    case 'voice': {
+      const { voice } = await import('./voice.js');
+      return voice(ws, args, o);
+    }
+    case 'voices': {
+      const { voices } = await import('./voice.js');
+      return voices(ws, o);
     }
     case 'beats': {
       if (!args[0]) throw new Error('Usage: sound beats <audio file>');
@@ -76,7 +65,7 @@ export async function sound(ws, action, args) {
       return { text: lines(text), files: [pictures.wave, pictures.spectrum] };
     }
     default:
-      throw new Error('Usage: sound score <script.py> | sound sfx [spec] [out] | sound beats <audio> | sound check <audio>');
+      throw new Error('Usage: sound score <script.py> | sound sfx [spec] [out] | sound voice [spec] [out] | sound voices | sound beats <audio> | sound check <audio>');
   }
 }
 

@@ -76,8 +76,11 @@ Sound is half the film. Unless silence was asked for: compose an original score 
 `kit/audio/synth.py` on the film's beat grid (`audio/score.py`, then `sound score audio/score.py`),
 place SFX on visual actions (`audio/sfx.json`, then `sound sfx`), or measure supplied music with
 `sound beats`. Check what you cannot hear with `sound check audio/score.wav` (numbers plus
-waveform and spectrum images). Declare files and gains in `thesium.json` → `audio`.
-See `knowledge/sound.md`.
+waveform and spectrum images). When the brief wants a voice, write timed lines in
+`audio/voice.json` and run `sound voice`: it speaks them locally, returns each line's start and end
+(put them in `timeline.json` so picture lands on the words), and transcribes the result to show any
+word that was not heard as written, with how it was pronounced. Declare files and gains in
+`thesium.json` → `audio`; the music ducks under narration automatically. See `knowledge/sound.md`.
 
 ## 6. Review your own film honestly
 

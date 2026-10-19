@@ -32,7 +32,8 @@ and identical on every engine:
 | **Material** | web pages captured as screenshots, text, brand cues and images with provenance; real QR codes; frame-accurate video clips |
 | **Eyes** | exact stills (with the master's motion blur), strips across cuts, phone-size reading copies, contact sheets, low-res previews |
 | **Ears** | original scores and SFX written in code (numpy synth), beat tracking, loudness and spectrum checks for sound the model cannot hear |
-| **Gate** | contract checks, a determinism test (frames rendered in two orders must match), an automatic frame check for empty bands and flat fields, an on-screen language check, technical QA of the master |
+| **Voice** | narration spoken locally (Kokoro, the system voice, any TTS command or recorded takes) on the film's clock, then transcribed and checked word by word against the script, with the phonemes of anything misheard; music ducks under it automatically |
+| **Gate** | contract checks, a determinism test (frames rendered in two orders must match), an automatic frame check for empty bands and flat fields, an on-screen language check, technical QA of the master, narration balance and intelligibility in the final mix |
 | **Finish** | full-quality render, stems mixed and normalised to −14 LUFS, AAC peak guard, poster and review sheets |
 | **Fresh eyes** | a critic subagent that did not make the film reviews it against a rubric and a craft floor |
 | **Design** | the [blueprint](docs/BLUEPRINT.md): principles, the engine contract, every subsystem, measurements |
@@ -52,7 +53,8 @@ and identical on every engine:
 
 Requirements: Node 22.12+, FFmpeg (with ffprobe) on PATH, Chrome/Edge/Chromium for the web engine,
 Python 3.10+ with numpy and scipy for scores and SFX, and whichever engine you want to use
-(`thesium doctor` checks all of it).
+(`thesium doctor` checks all of it). For narration, optionally `pip install kokoro-onnx` (local
+voices; the 325 MB model downloads once) and `pip install faster-whisper` (the hearing check).
 
 **As a Claude Code plugin** (the director skill, the critic subagent and the MCP server):
 

@@ -37,6 +37,11 @@ Sound (Python 3 with numpy and scipy)
   sound score <script.py>        run a score script with the kit's synth on its path
   sound sfx [audio/sfx.json] [audio/sfx.wav]
                                  synthesize an SFX timeline
+  sound voice [audio/voice.json] [audio/voice.wav]
+                                 narration: timed lines spoken locally (Kokoro, the system voice,
+                                 any TTS command or recorded takes), then transcribed and compared
+                                 with the script when faster-whisper is installed
+  sound voices                   Kokoro's voice ids
   sound beats <audio>            tempo, beats, downbeats, hits → audio/beats.json
   sound check <audio>            loudness, peak, balance, waveform and spectrum → review/
 
@@ -231,7 +236,7 @@ export async function main(argv) {
         return print(await ops.notes(workspace(), { done: flags.done ? [String(flags.done), ...args] : undefined }));
       case 'sound': {
         const { sound } = await import('./studio/sound.js');
-        return print(await sound(workspace(), args[0], args.slice(1)));
+        return print(await sound(workspace(), args[0], args.slice(1), { log }));
       }
       case 'fonts': {
         const ws = workspace();

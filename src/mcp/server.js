@@ -96,8 +96,8 @@ const TOOLS = [
   { name: 'check', description: 'Contract checks: manifest, engine rules, sound files, on-screen language and determinism. PASS or FAIL with findings.', inputSchema: { type: 'object', properties: { workspace: ws, fast: { type: 'boolean' } } } },
   {
     name: 'sound',
-    description: 'Sound tools. action score (args: [script.py]) runs a synth score script; sfx (args: [spec.json, out.wav]); beats (args: [audio]); check (args: [audio]) measures loudness and returns waveform and spectrum images.',
-    inputSchema: { type: 'object', required: ['action'], properties: { workspace: ws, action: { type: 'string', enum: ['score', 'sfx', 'beats', 'check'] }, args: { type: 'array', items: { type: 'string' } } } },
+    description: 'Sound tools. action score (args: [script.py]) runs a synth score script; sfx (args: [spec.json, out.wav]); voice (args: [audio/voice.json, audio/voice.wav]) speaks timed narration lines locally, places them on the clock, and transcribes the result to compare with the script; voices lists voice ids; beats (args: [audio]); check (args: [audio]) measures loudness and returns waveform and spectrum images.',
+    inputSchema: { type: 'object', required: ['action'], properties: { workspace: ws, action: { type: 'string', enum: ['score', 'sfx', 'voice', 'voices', 'beats', 'check'] }, args: { type: 'array', items: { type: 'string' } } } },
   },
   { name: 'master', description: 'Render the delivery: full quality, mixed and mastered sound, technical QA, sheets. Writes out/<title>-v<N>.mp4.', inputSchema: { type: 'object', properties: { workspace: ws, draft: { type: 'boolean' } } } },
   { name: 'review', description: 'Gather the evidence for an independent critique of the latest master (REVIEW.md plus images).', inputSchema: { type: 'object', properties: { workspace: ws } } },

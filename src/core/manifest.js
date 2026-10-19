@@ -38,7 +38,7 @@ export const SIZES = {
  * @property {number} duration seconds
  * @property {{ samples: number, shutter: number }} motionBlur temporal supersampling applied by Thesium
  * @property {{ music?: string, sfx?: string, voice?: string, gains: { music: number, sfx: number, voice: number },
- *   loudness: number, truePeak: number }} audio
+ *   duck: number | 'auto', loudness: number, truePeak: number }} audio duck: how far music dips under narration
  * @property {Record<string, Param>} params tunable values the studio UI exposes
  * @property {string} [language] BCP 47 language of on-screen text
  * @property {Record<string, any>} engineOptions per-engine settings
@@ -93,6 +93,9 @@ export function normalize(raw) {
   const gains = { music: 0, sfx: -4, voice: 0, ...(isObject(audio.gains) ? audio.gains : {}) };
   for (const [key, value] of Object.entries(gains))
     if (typeof value !== 'number' || value < -60 || value > 24) errors.push(`audio.gains.${key} must be dB from -60 to 24`);
+  const duck = audio.duck ?? 'auto';
+  if (duck !== 'auto' && (typeof duck !== 'number' || duck < 0 || duck > 30))
+    errors.push('audio.duck must be "auto" or dB from 0 to 30 (how far music dips under narration; 0 = off)');
   const params = isObject(raw.params) ? raw.params : {};
   for (const [id, p] of Object.entries(params)) {
     if (!/^[A-Za-z_][\w-]*$/.test(id)) errors.push(`params.${id}: ids are letters, digits, _ and -`);
@@ -119,6 +122,7 @@ export function normalize(raw) {
       sfx: audio.sfx || undefined,
       voice: audio.voice || undefined,
       gains,
+      duck: typeof duck === 'number' ? duck : 'auto',
       loudness: typeof audio.loudness === 'number' ? audio.loudness : -14,
       truePeak: typeof audio.truePeak === 'number' ? audio.truePeak : -1,
     },

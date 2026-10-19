@@ -20,4 +20,6 @@ JohnHeibel/PDoomVideo, francozanardi/papermotion.
 | QR Code generator library | [nayuki/QR-Code-generator](https://github.com/nayuki/QR-Code-generator) | MIT © Project Nayuki | `src/vendor/qrcodegen.js` (compiled from TypeScript, unmodified) |
 | Fonts | Inter, Manrope, Space Grotesk, Unbounded, Bebas Neue, Fraunces, Instrument Serif, JetBrains Mono | SIL OFL 1.1 | `fonts/` (notices beside each family) |
 | Synthesiser and audio tools | Vmotion `studio-kit/synth.py`, `audiotools.py` (beat tracker adapted from Kianzzz/xilo-opus-video, MIT) | MIT | `kit/audio/` |
+| Narration model (downloaded on first use, not bundled) | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) as ONNX from [thewh1teagle/kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) model-files-v1.0, pinned by SHA-256 | Apache-2.0 (weights), MIT (kokoro-onnx) | `kit/audio/voice.py`, `~/.thesium/models/kokoro/` |
+| Hearing check (optional, installed by the person) | [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) running OpenAI Whisper models | MIT | `kit/audio/voice.py` |
 

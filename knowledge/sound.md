@@ -11,9 +11,11 @@ check it with numbers and pictures.
    `audio/score.py`, run `thesium sound score audio/score.py`. Compose from the cue map: tempo,
    bars, sections, instrumentation per section.
 3. **SFX** you place on the exact frames of visual actions: `thesium sound sfx audio/sfx.json`.
+4. **Narration**, when the brief wants a voice: a script of timed lines spoken locally,
+   `thesium sound voice audio/voice.json`. See Narration below.
 
-Declare what you made in `thesium.json` → `audio` (`music`, `sfx`, `voice`, `gains`). Thesium
-masters it to −14 LUFS integrated, −1 dBTP, AAC 48 kHz, whatever the engine.
+Declare what you made in `thesium.json` → `audio` (`music`, `sfx`, `voice`, `gains`, `duck`).
+Thesium masters it to −14 LUFS integrated, −1 dBTP, AAC 48 kHz, whatever the engine.
 
 ## Writing a score with `kit/audio/synth.py`
 
@@ -63,6 +65,57 @@ previous scene's sound run over the cut (L-cut).
 
 Sounds: `impact boom hit whoosh swish riser downlifter click tick pop blip glitch
 shimmer sparkle type snap thump`. Each accepts `gain`, `pitch`, `length`, `pan`.
+
+## Narration
+
+Only when the brief asks for a voice, or the film needs words the picture cannot carry. A film
+that reads well on mute should stay on mute.
+
+`audio/voice.json`:
+
+```json
+{ "voice": "af_heart", "speed": 1.0,
+  "lines": [
+    { "t": 1.2, "text": "Every frame is a function of time." },
+    { "t": 4.0, "text": "Thesium sees every frame it makes.", "say": "Theezium sees every frame it makes." },
+    { "t": 9.5, "text": "Made by hand.", "file": "assets/vo/take-3.wav" } ] }
+```
+
+- `t` is when the line starts on the film's clock. `text` is what is said and what the hearing
+  check expects; `say` respells it for pronunciation; `file` uses a recorded take instead.
+  `voice`, `speed`, `lang` and `gain` (dB) work for the whole script or per line.
+- Providers: `"kokoro"` (default; Kokoro-82M, local, `pip install kokoro-onnx`, the model downloads
+  once), `"system"` (the operating system's voice, for a temp track), or `"command"` with
+  `"command": "piper -m voice.onnx -f \"{out}\""` for any text-to-speech CLI (text on stdin and in
+  `{textFile}`; also `{voice}`, `{speed}`, `{lang}`). Quote paths in templates.
+- Kokoro voices (`thesium sound voices`): `af_heart`, `af_bella`, `af_nicole`, `am_michael`,
+  `am_fenrir`, `am_puck` (American); `bf_emma`, `bf_isabella`, `bm_george`, `bm_fable` (British);
+  and Spanish, French, Hindi, Italian, Japanese, Portuguese and Mandarin voices. English voices are
+  the strongest; check other languages with the hearing check.
+- Every line is cached by what shapes it, so changing one line re-speaks only that line.
+
+What `sound voice` gives back, and what to do with it:
+
+- **Line timings** in `audio/voice.timeline.json` (start and end of every line as spoken). Put
+  them into `timeline.json` cues so captions, cuts and hits land on the words.
+- **Problems**: a line that runs into the next, past the film's end, or faster than about 3.4
+  words a second (narration reads well at 2.3–3).
+- **The hearing check** (with `pip install faster-whisper`): the narration is transcribed and
+  compared with the script, word by word. A word that is heard as something else is shown with
+  how Kokoro pronounced it (`thesium /θˈiːziəm/`), so you can judge the sound from text and
+  respell it in `say` if it is wrong. Whisper does not know invented names; a second pass is told
+  the capitalised words it missed, as a viewer who reads them on screen would know them.
+
+Writing for the ear: short sentences, one idea each; say what the picture cannot (why, not what);
+leave the big visual hits without words; let the music breathe between lines; end on the
+product's name or the call to action, not on a subordinate clause.
+
+**The mix.** Narration is levelled to −16 LUFS. With `"duck": "auto"` (the default) the music
+dips under every phrase just enough for the voice to sit 10 LU above it, easing in 0.2 s before
+the voice and out over 0.35 s after; a number fixes the dip in dB, `0` turns it off. The master's
+QA measures the voice against the music while it speaks (it fails under 6 LU) and transcribes the
+delivered mix, so a voice buried under the music or a missing line fails QA. Whisper hears speech
+through music that people find too loud, which is why the balance is measured as well.
 
 ## Check what you cannot hear
 

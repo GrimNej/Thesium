@@ -182,6 +182,16 @@ pictures.
   drums, basses, pads, arps, leads, bells, risers, impacts, drops, sidechain, bus reverb, limiter.
   Rendering also writes the beat grid.
 - **SFX** are a JSON timeline (`impact`, `whoosh`, `tick`, `click`, `pop`, `shimmer`…) synthesised to a WAV.
+- **Narration** is a script of timed lines (`audio/voice.json`) spoken locally by Kokoro-82M
+  (ONNX on the CPU; the model is fetched once and pinned by SHA-256), by the operating system's
+  voice, by any TTS command line, or taken from recorded files. Lines are cached by content and
+  placed on the clock with `adelay`; the track is levelled to −16 LUFS and its line timings are
+  written for the picture to follow.
+- **Hearing check.** The director cannot listen, so narration is transcribed with faster-whisper
+  and aligned word by word with the script (exact, near and missed words). Whisper does not know
+  invented names: when a capitalised word is missed, a second pass is given those words, and a
+  word counts as heard when either pass heard it. Words still missed are shown with the phonemes
+  Kokoro used, so pronunciation can be judged as text and fixed with a respelling.
 - **Beats** of supplied music are tracked (`sound beats`).
 - **Checks**: EBU R128 loudness, true peak, loudness range, low/mid balance, near-silent spans,
   waveform and spectrum pictures.
@@ -190,6 +200,13 @@ pictures.
   then measures the encoded file's true peak and re-encodes lower until it is at or below the target
   (−1 dBTP by default). This last step exists because AAC creates inter-sample peaks the limiter
   never saw; the showcase film's first master measured −0.3 dBTP before it was added.
+- **Ducking**: speech spans come from `silencedetect` on the narration track (pauses under 0.6 s
+  merged), and the music gets a volume envelope that eases down 0.2 s before each span and back
+  over 0.35 s after. `"duck": "auto"` measures the voice against the music inside those spans and
+  dips just enough for 10 LU of separation (0–24 dB); a number fixes the dip.
+- **Narration QA** on every master: the voice-over-music separation is measured (under 6 LU fails)
+  and the delivered mix is transcribed against the script. Both are needed: in testing, Whisper
+  still heard every word with the music 7.7 LU *louder* than the voice.
 
 ## 9. The quality system
 
@@ -202,6 +219,8 @@ pictures.
 | Determinism | `check` | frames that change when rendered in a different order |
 | Frame check | `preview`, `master` | empty edge bands, pictures that stop short of the frame, a single uniform colour field covering a large share of the frame |
 | Technical QA | `master` | duration, codec, fps, pixel format, size, missing audio, clipping, true peak, loudness off target, long near-black spans |
+| Hearing check | `sound voice` | lines that overlap, run past the end or race; words not heard as written, with the phonemes that were spoken |
+| Narration QA | `master` | a voice less than 6 LU above the music while it speaks; narration that cannot be made out in the delivered mix |
 | Self-review | the director | the rubric in `knowledge/review.md`, stills per shot, strips per cut, phone copies |
 | Independent critic | after the master | a subagent that did not make the film scores nine rubric items and lists timed problems from `review/critic/<version>/REVIEW.md` |
 | The person | any time | notes pinned on the timeline with their exact frame |

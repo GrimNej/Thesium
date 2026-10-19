@@ -8,8 +8,8 @@ import { inside, rel, KNOWLEDGE_DIR } from '../core/paths.js';
 import { loadTimeline } from '../core/workspace.js';
 import { engine, ENGINES } from '../engines/index.js';
 import { renderStills, renderStrip, renderVideo, phoneCopies } from '../render/frames.js';
-import { videoSheet, grabFrames, probe, imageDifference, ffmpegVersion } from '../media/ffmpeg.js';
-import { mixAudio, mux, loudness, blackSpans, decodedPeakDb, audioPictures } from '../media/audio.js';
+import { videoSheet, grabFrames, probe, imageDifference, ffmpegVersion, ff } from '../media/ffmpeg.js';
+import { mixAudio, mux, loudness, blackSpans, decodedPeakDb, audioPictures, narrationBalance } from '../media/audio.js';
 import { frameCheck } from '../review/framecheck.js';
 import { scriptCheck } from '../review/language.js';
 
@@ -227,12 +227,22 @@ export async function master(ws, o = {}) {
   await mux(picture, sound, output, m.duration, o.log, m.audio.truePeak);
   await rm(picture, { force: true });
   if (sound) await rm(sound, { force: true });
-  const qa = await inspect(ws, m, output, path.join(outDir, `${name}-qa`), { expectSound: Boolean(sound) });
+  const qa = await inspect(ws, m, output, path.join(outDir, `${name}-qa`), { expectSound: Boolean(sound), draft: o.draft });
   qa.renderSeconds = Math.round((Date.now() - started) / 1000);
   await writeFile(path.join(outDir, `${name}.json`), JSON.stringify({ version, title: m.title, engine: m.engine, ...qa }, null, 1));
   const lines = [
     `${rel(ws, output)} (${m.width}×${m.height}, ${m.duration} s, ${sound ? 'with sound' : 'silent'}; ${qa.renderSeconds} s)`,
     qa.issues.length ? `Technical QA found:\n${qa.issues.map((i) => `  - ${i}`).join('\n')}` : 'Technical QA: pass',
+    ...(qa.narration
+      ? [
+          `Narration in the mix: ${[
+            qa.narration.balance && `${qa.narration.balance.lu} LU above the music while it speaks (music dips ${qa.narration.balance.dip} dB${qa.narration.balance.auto ? ', auto' : ''})`,
+            qa.narration.share !== undefined && `${Math.round(qa.narration.share * 100)}% of ${qa.narration.words} words heard (Whisper ${qa.narration.model})`,
+          ]
+            .filter(Boolean)
+            .join('; ')}`,
+        ]
+      : []),
     `Review evidence: ${[qa.sheet, qa.phoneSheet, qa.poster].map((f) => rel(ws, f)).join(', ')}`,
   ];
   return { ok: !qa.issues.length, text: lines.join('\n'), files: [output, qa.sheet, qa.phoneSheet, qa.poster], data: { output, ...qa } };
@@ -244,7 +254,7 @@ export async function master(ws, o = {}) {
  * @param {import('../core/manifest.js').Manifest} m
  * @param {string} file
  * @param {string} dir
- * @param {{ expectSound: boolean }} o
+ * @param {{ expectSound: boolean, draft?: boolean }} o
  */
 export async function inspect(ws, m, file, dir, o) {
   await mkdir(dir, { recursive: true });
@@ -256,7 +266,7 @@ export async function inspect(ws, m, file, dir, o) {
   const [num, den] = String(v.avg_frame_rate).split('/').map(Number);
   if (Math.abs(num / (den || 1) - m.fps) > 0.01) issues.push(`Frame rate ${v.avg_frame_rate}, expected ${m.fps}`);
   if (v.pix_fmt !== 'yuv420p') issues.push(`Pixel format ${v.pix_fmt}, expected yuv420p`);
-  if (v.width !== m.width || v.height !== m.height) issues.push(`Size ${v.width}×${v.height}, expected ${m.width}×${m.height}`);
+  if (!o.draft && (v.width !== m.width || v.height !== m.height)) issues.push(`Size ${v.width}×${v.height}, expected ${m.width}×${m.height}`);
   if (o.expectSound && !info.audio) issues.push('Sound was declared but the file has no audio stream');
   const black = await blackSpans(file);
   const long = black.filter((b) => b.duration > 1.2);
@@ -269,6 +279,18 @@ export async function inspect(ws, m, file, dir, o) {
       issues.push(`True peak ${sound.truePeakDbfs} dBTP is above the ${m.audio.truePeak} dBTP target`);
     if (sound.integratedLufs !== undefined && Math.abs(sound.integratedLufs - m.audio.loudness) > 2)
       issues.push(`Loudness ${sound.integratedLufs} LUFS, target ${m.audio.loudness}`);
+  }
+  const narration = info.audio ? await hearNarration(ws, m, file, dir) : undefined;
+  const balance = info.audio ? await narrationBalance(ws, m, dir) : undefined;
+  if (balance && balance.lu < 6)
+    issues.push(
+      `Narration sits only ${balance.lu} LU above the music while it speaks (aim for 8 or more): lower audio.gains.music${m.audio.duck === 'auto' ? '' : ` or set audio.duck to "auto" (now ${m.audio.duck} dB)`}`,
+    );
+  if (narration && narration.share < 0.85) {
+    const worst = [...narration.lines].sort((a, b) => a.matched + a.near.length - (b.matched + b.near.length))[0];
+    issues.push(
+      `Narration is hard to make out in the mix: ${Math.round(narration.share * 100)}% of words heard (worst at ${worst.t} s: "${worst.heard}"). Raise audio.duck or lower audio.gains.music`,
+    );
   }
   const sheet = (await videoSheet(file, path.join(dir, 'sheet.jpg'), { step: Math.max(0.5, m.duration / 36) })).output;
   const phoneSheet = (await videoSheet(file, path.join(dir, 'phone.jpg'), { step: Math.max(1, m.duration / 24), width: 180, columns: 8 })).output;
@@ -283,6 +305,7 @@ export async function inspect(ws, m, file, dir, o) {
     width: v.width,
     height: v.height,
     sound,
+    narration: narration || balance ? { ...narration, balance } : undefined,
     blackSpans: black,
     frameCheck: issuesFound,
     sheet,
@@ -290,6 +313,27 @@ export async function inspect(ws, m, file, dir, o) {
     poster,
     details: details.map((f, i) => ({ time: detailTimes[i], file: f })),
   };
+}
+
+/**
+ * The hearing check on the delivered mix: the master's sound is transcribed and compared with
+ * the narration script, so a voice buried under the music fails QA. Skipped without narration
+ * timings or faster-whisper.
+ * @param {string} ws @param {import('../core/manifest.js').Manifest} m @param {string} file @param {string} dir
+ */
+async function hearNarration(ws, m, file, dir) {
+  if (!m.audio.voice || !existsSync(path.join(ws, 'kit', 'audio', 'voice.py'))) return undefined;
+  const timings = inside(ws, m.audio.voice).replace(/\.wav$/i, '') + '.timeline.json';
+  if (!existsSync(timings)) return undefined;
+  const { hearLines } = await import('./voice.js');
+  const wav = path.join(dir, 'mix-16k.wav');
+  await ff(['-i', file, '-vn', '-ac', '1', '-ar', '16000', wav]);
+  try {
+    const lines = JSON.parse(await readFile(timings, 'utf8')).lines;
+    return await hearLines(ws, wav, lines, { language: m.language || 'en' });
+  } finally {
+    await rm(wav, { force: true });
+  }
 }
 
 /** Latest master in out/. @param {string} ws */
@@ -482,6 +526,17 @@ export async function doctor() {
   } catch {
     rows.push(['python (sound)', false, 'optional: Python 3.10+ with numpy and scipy for scores, SFX and beat tracking']);
   }
+  const { hasModule } = await import('./python.js');
+  rows.push(
+    (await hasModule('kokoro_onnx'))
+      ? ['voice (kokoro)', true, 'Kokoro text-to-speech; the model downloads once into ~/.thesium/models']
+      : ['voice (kokoro)', false, `optional: ${python} -m pip install kokoro-onnx for local narration (the "system" provider needs nothing)`],
+  );
+  rows.push(
+    (await hasModule('faster_whisper'))
+      ? ['hearing (whisper)', true, 'faster-whisper transcribes narration and masters to check every word']
+      : ['hearing (whisper)', false, `optional: ${python} -m pip install faster-whisper so narration is transcribed and checked`],
+  );
   for (const e of Object.values(ENGINES)) {
     const d = await e.detect().catch((error) => ({ ok: false, detail: String(error), version: undefined, fix: undefined }));
     rows.push([`engine ${e.id}`, d.ok, `${d.version ? `${d.version} · ` : ''}${d.detail}${!d.ok && d.fix ? ` → ${d.fix}` : ''}`]);
