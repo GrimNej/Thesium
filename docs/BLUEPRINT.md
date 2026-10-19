@@ -271,7 +271,7 @@ On a 12-thread Windows 10 machine (CPU rendering):
 | EffectCraft: 7 full-resolution stills of the showcase film | ~6 s |
 | EffectCraft: 30 s preview of the showcase film at half scale | 120 s |
 | EffectCraft: 30 s 1080p master of the showcase film (fractal fog, glows, 3D, 60 expression particles) | 527 s |
-| Test suite (12 tests: an end-to-end web film and EffectCraft film, MCP, QR) | ~6 s |
+| Test suite (13 tests: end-to-end web, EffectCraft and Remotion films (Remotion opt-in), MCP, QR) | ~6 s; ~20 s with Remotion |
 | Web: the showcase film's 30 s master with 4 motion-blur samples (3,600 renders) | 145 s |
 | Web: the showcase film's 30 s master with 8 motion-blur samples (7,200 renders: WebGL fog, CSS 3D, SVG filters) | ~250 s |
 | Remotion 4.0.537: 3 stills of a 720p film, first bundle / bundle reused | 9.5 s / 5.3 s (41 s before bundling once) |

@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -70,6 +70,37 @@ T.key(ring, T.shapeItem(ring, "trim") + "/end", [[0, 0], [1.5, 100, "expo"]]);
     await writeFile(path.join(film, 'film', 'build.jsx'), 'T.film(); T.text("x", { font: "No Such Family", style: "Bold" });\n');
     assert.equal(await quiet(() => main(['--workspace', film, 'build'])), 1);
   } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+// Remotion is installed per film, so this runs when THESIUM_TEST_REMOTION names a node_modules
+// folder that has it (npm install remotion @remotion/cli react react-dom).
+const REMOTION = process.env.THESIUM_TEST_REMOTION;
+
+test('a Remotion film renders stills with params and passes check', { skip: !(REMOTION && existsSync(path.join(REMOTION, '@remotion', 'cli'))) && 'THESIUM_TEST_REMOTION not set' }, async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'thesium-rm-'));
+  const film = path.join(dir, 'film');
+  const project = path.join(film, 'film', 'remotion');
+  const modules = path.join(project, 'node_modules');
+  try {
+    assert.equal(await quiet(() => main(['new', film, '--engine', 'remotion', '--size', '640x360', '--duration', '2', '--title', 'Remotion test'])), 0);
+    await symlink(path.resolve(/** @type {string} */ (REMOTION)), modules, 'junction');
+    await writeFile(
+      path.join(project, 'src', 'Film.tsx'),
+      `import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion';
+export const Film = ({ thesium }: { thesium: { params?: { accent?: string } } }) => {
+  const x = interpolate(useCurrentFrame(), [0, 59], [40, 560]);
+  return <AbsoluteFill style={{ background: '#05070c' }}><div style={{ position: 'absolute', left: x, top: 150, width: 60, height: 60, background: thesium.params?.accent ?? '#6fe7f2' }} /></AbsoluteFill>;
+};
+`,
+    );
+    assert.equal(await quiet(() => main(['--workspace', film, 'still', '0.5', '1.5'])), 0);
+    assert.ok(existsSync(path.join(film, 'review', 'still-1.50.jpg')));
+    assert.equal(await quiet(() => main(['--workspace', film, 'check'])), 0);
+  } finally {
+    // Unlink the shared node_modules first so cleanup can never reach into it.
+    await unlink(modules).catch(() => {});
     await rm(dir, { recursive: true, force: true });
   }
 });
