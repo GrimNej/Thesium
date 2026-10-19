@@ -64,8 +64,10 @@ Fast moves look premium with blur and cheap without it.
   than about a tenth of the frame per frame, shorten the shutter or slow the move.
 - `thesium still` shows the master's blur; `--sharp` turns it off for layout checks. Check the
   fastest moment with `thesium strip` before mastering.
-- Thin, precise elements (a playhead, a rule, a cursor) smear into near-invisibility when they move
-  fast under blur. Keep them sharp; blur the masses around them.
+- Thin, precise elements (a playhead, a rule, a cursor, a counter's digits) smear into
+  near-invisibility or ghosts when they move fast under blur. Keep them sharp; blur the masses
+  around them. Per-layer engines: leave their motion blur off. Supersampled engines: drive them
+  with the frame's time (`frameTime(t)` in the web kit) so every sample draws them identically.
 
 ## Camera
 

@@ -208,3 +208,11 @@ export async function timeline() {
     },
   };
 }
+
+/**
+ * The output frame's own time for a sample time t. With motionBlur.samples > 1, Thesium calls
+ * render(t) several times per frame across the shutter and averages them; anything driven by
+ * frameTime(t) instead of t is identical in every sample, so it stays sharp (a playhead, a cursor,
+ * a counter's digits) while everything else blurs.
+ */
+export const frameTime = (t) => Math.round(t * film().fps) / film().fps;

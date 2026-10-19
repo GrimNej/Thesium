@@ -42,7 +42,7 @@ window.ready = true;
 
 | Module | Gives you |
 | --- | --- |
-| `motion.js` | `ease.*` (`out`, `inOut`, `outExpo`, `snap`, `emphasized`, `bezier`…), closed-form `spring`, `springTo`, `track` keyframes, `seg`, `env`, `stagger`, `rand(seed)`, `hash`, `noise`, `noise2`, `fbm`, `boil`, `beatGrid`, `camera2d`, `splitWords`, `film()`, `params()`, `timeline()` |
+| `motion.js` | `ease.*` (`out`, `inOut`, `outExpo`, `snap`, `emphasized`, `bezier`…), closed-form `spring`, `springTo`, `track` keyframes, `seg`, `env`, `stagger`, `rand(seed)`, `hash`, `noise`, `noise2`, `fbm`, `boil`, `beatGrid`, `camera2d`, `splitWords`, `film()`, `params()`, `timeline()`, `frameTime(t)` |
 | `media.js` | `image(src)`, `images([...])`, `frames(dir)` frame-accurate video (`.at(t)`), `drawCover(ctx, img, x, y, w, h, {fx, fy, zoom})` |
 | `post.js` | `createPost(canvas)`: WebGL2 pass over any canvas: grain, vignette, chromatic aberration, CRT curvature, scanlines, bloom, halftone, flash, light leak, warp, exposure, saturation, contrast, tint |
 
@@ -88,7 +88,12 @@ extrude SVG paths; keep the camera's motion on the beat grid.
 
 `thesium.json` → `motionBlur: { "samples": 4, "shutter": 0.5 }` makes every frame the average of
 4 renders across a 180° shutter, in previews (`--blur`), stills and the master. Use 2–4 for
-gentle moves, 8–12 for fast camera moves. Stationary text stays sharp by construction.
+gentle moves, 8–12 for fast camera moves and whips (too few samples show as discrete echoes).
+Stationary text stays sharp by construction.
+
+The blur applies to everything that moves. To keep a precise element sharp (a playhead, a cursor,
+the digits of a counter), drive it with `frameTime(t)` from `/kit/web/motion.js` instead of `t`:
+every sample of a frame then draws it in the same place.
 
 ## Performance
 

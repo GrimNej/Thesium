@@ -11,6 +11,8 @@ import * as ops from './studio/ops.js';
 const HELP = `thesium: an engine-agnostic motion studio for frontier models
 
 Film
+  make "<request>" [--engine …] [--size …] [--duration 30] [--folder name] [--model …] [--dry-run]
+                                 one command: a film folder, then a headless director session (Claude Code)
   new <folder> [--engine web|effectcraft|remotion|hyperframes|command] [--size 16:9|9:16|1:1|WxH]
                [--fps 30] [--duration 15] [--title "…"] [--brief "…"] [--language en]
   status                         where the film stands and what to do next
@@ -81,7 +83,7 @@ function parse(argv) {
   return { positional, flags, params };
 }
 
-const BOOLEAN = new Set(['phone', 'sharp', 'blur', 'draft', 'fast', 'no-open', 'json', 'help']);
+const BOOLEAN = new Set(['phone', 'sharp', 'blur', 'draft', 'fast', 'no-open', 'json', 'help', 'dry-run']);
 
 /** @param {string | boolean | undefined} v @param {number} [fallback] */
 const num = (v, fallback) => (v === undefined || v === true ? fallback : Number(v));
@@ -111,6 +113,22 @@ export async function main(argv) {
       case 'help':
         process.stdout.write(HELP);
         return 0;
+      case 'make': {
+        const { make } = await import('./studio/make.js');
+        const size = parseSize(String(flags.size || '16:9'));
+        return await make(args.join(' '), {
+          folder: typeof flags.folder === 'string' ? flags.folder : undefined,
+          engine: typeof flags.engine === 'string' ? flags.engine : undefined,
+          ...size,
+          fps: num(flags.fps),
+          duration: num(flags.duration, 30),
+          title: typeof flags.title === 'string' ? flags.title : undefined,
+          model: typeof flags.model === 'string' ? flags.model : undefined,
+          permissionMode: typeof flags['permission-mode'] === 'string' ? flags['permission-mode'] : undefined,
+          dryRun: Boolean(flags['dry-run']),
+          cwd: typeof flags.workspace === 'string' ? flags.workspace : undefined,
+        });
+      }
       case 'new': {
         if (!args[0]) throw new Error('Usage: thesium new <folder> [--engine …] [--size …] [--duration …]');
         const size = parseSize(String(flags.size || '16:9'));
