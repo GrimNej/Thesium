@@ -1,0 +1,49 @@
+{
+  "name": "thesium",
+  "version": "0.1.0",
+  "description": "An engine-agnostic motion studio for frontier models: the model directs, Thesium lets it see, hear, check and master its film on any renderer.",
+  "type": "module",
+  "license": "MIT",
+  "author": "GrimNej",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GrimNej/Thesium.git"
+  },
+  "homepage": "https://github.com/GrimNej/Thesium#readme",
+  "keywords": [
+    "motion-graphics",
+    "video",
+    "ai",
+    "claude",
+    "mcp",
+    "effectcraft",
+    "remotion",
+    "hyperframes"
+  ],
+  "bin": {
+    "thesium": "bin/thesium.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "kit",
+    "knowledge",
+    "fonts",
+    "skills",
+    "agents",
+    ".claude-plugin",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=spec test/",
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  }
+}

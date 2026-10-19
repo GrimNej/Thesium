@@ -1,0 +1,11 @@
+node_modules/
+.thesium/
+*.log
+.DS_Store
+Thumbs.db
+# Example films keep their source; renders and review evidence are regenerated.
+examples/*/out/
+examples/*/review/
+examples/*/.thesium/
+# The original commission note stays local.
+first-contact.md
