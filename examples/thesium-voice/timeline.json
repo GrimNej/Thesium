@@ -1,0 +1,14 @@
+{
+  "bpm": 96,
+  "offset": 0,
+  "beatsPerBar": 4,
+  "sections": [
+    { "start": 0, "name": "Cannot hear" },
+    { "start": 4.8, "name": "Writes it down" },
+    { "start": 9.0, "name": "Checks every word" },
+    { "start": 12.4, "name": "Names as sound" },
+    { "start": 16.6, "name": "Music steps aside" },
+    { "start": 20.0, "name": "Hears every word" }
+  ],
+  "cues": []
+}

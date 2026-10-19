@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hears every word</title>
+<style>
+  @font-face { font-family: 'Unbounded'; src: url('/thesium/fonts/Unbounded.ttf'); font-weight: 200 900; }
+  @font-face { font-family: 'Space Grotesk'; src: url('/thesium/fonts/SpaceGrotesk.ttf'); font-weight: 300 700; }
+  @font-face { font-family: 'JetBrains Mono'; src: url('/thesium/fonts/JetBrainsMono.ttf'); font-weight: 100 800; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #05070c; }
+  canvas, .layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .layer { overflow: hidden; }
+  .abs { position: absolute; left: 0; top: 0; }
+  .t { white-space: nowrap; line-height: 1; }
+  .t span { display: inline-block; white-space: pre; }
+  #vignette { background: radial-gradient(ellipse 80% 75% at 50% 50%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.2) 65%, rgba(0,0,0,0.55) 100%); }
+  #grain { mix-blend-mode: overlay; opacity: 0.14; }
+</style>
+</head>
+<body>
+<canvas id="world"></canvas>
+<canvas id="fx"></canvas>
+<div class="layer" id="stage"></div>
+<div class="layer" id="vignette"></div>
+<canvas id="grain"></canvas>
+<script type="module">
+// Hears every word: the hearing check drawn from its own numbers (assets/hearing.json).
+import { ease, clamp, lerp, rand, timeline } from '/kit/web/motion.js';
+
+const { width: W, height: H } = window.THESIUM;
+const CX = W / 2;
+const BONE = '#f3efe6', STEEL = '#8a93a3', CYAN = '#6fe7f2', WARM = '#ff7a5c';
+await timeline();
+const data = await (await fetch('/assets/hearing.json')).json();
+const L = data.lines; // six lines, each with its words' heard times
+
+// ── Keys, helpers ───────────────────────────────────────────────────────────
+const FEEL = { linear: ease.linear, out: ease.outQuart, inOut: ease.inOut, expo: ease.outExpo, in: ease.in };
+function K(keys, feel = 'out') {
+  return (t) => {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (let i = 1; i < keys.length; i++) {
+      const [t1, v1, f = feel] = keys[i];
+      const [t0, v0] = keys[i - 1];
+      if (t < t1) return lerp(v0, v1, FEEL[f](clamp((t - t0) / (t1 - t0))));
+    }
+    return keys[keys.length - 1][1];
+  };
+}
+const ramp = (t, a, d, f = ease.outQuart) => f(clamp((t - a) / d));
+const updaters = [];
+const on = (fn) => updaters.push(fn);
+const stage = document.getElementById('stage');
+function el(tag, css = {}, parent = stage) {
+  const e = document.createElement(tag);
+  e.className = 'abs';
+  Object.assign(e.style, css);
+  parent.append(e);
+  return e;
+}
+function place(e, { x = 0, y = 0, s = 1, o = 1, ax = 0.5, ay = 0.5 }) {
+  e.style.transform = `translate(${x}px, ${y}px) translate(${-ax * 100}%, ${-ay * 100}%) scale(${s})`;
+  e.style.transformOrigin = `${ax * 100}% ${ay * 100}%`;
+  e.style.opacity = String(o);
+  e.style.display = o <= 0.001 ? 'none' : '';
+}
+const F = {
+  name: ['Unbounded', 900],
+  say: ['Space Grotesk', 600],
+  line: ['Space Grotesk', 500],
+  mono: ['JetBrains Mono', 500],
+};
+function text(str, [family, weight], size, color, o = {}) {
+  const e = el('div', { fontFamily: `'${family}'`, fontWeight: String(weight), fontSize: `${size}px`, color, letterSpacing: `${(o.tracking || 0) / 1000}em` }, o.parent);
+  e.classList.add('t');
+  const parts = o.by === 'words' ? str.split(/(\s+)/) : o.by === 'chars' ? [...str] : [str];
+  e.units = [];
+  for (const p of parts) {
+    const span = document.createElement('span');
+    span.textContent = p;
+    e.append(span);
+    if (p.trim()) e.units.push(span);
+  }
+  if (o.glow) e.style.textShadow = o.glow;
+  return e;
+}
+/** Lights each word at the moment it was heard: dim before, bone after, a small lift. */
+function karaoke(e, words, t, dim = 0.2) {
+  e.units.forEach((u, i) => {
+    const w = words[i];
+    const p = w ? ramp(t, w.s - 0.04, 0.16) : 1;
+    u.style.opacity = String(lerp(dim, 1, p));
+    u.style.transform = `translateY(${lerp(5, 0, p)}px)`;
+  });
+}
+const env = (arr, t) => {
+  const x = t * data.rate;
+  const i = Math.floor(x);
+  if (i <= 0) return arr[0];
+  if (i >= arr.length - 1) return arr[arr.length - 1];
+  return lerp(arr[i], arr[i + 1], x - i);
+};
+
+// ── World: the launch film's fog ────────────────────────────────────────────
+const world = document.getElementById('world');
+world.width = W; world.height = H;
+const gl = world.getContext('webgl2', { preserveDrawingBuffer: true });
+const prog = (() => {
+  const vs = `#version 300 es
+  in vec2 p; out vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0., 1.); }`;
+  const fs = `#version 300 es
+  precision highp float; in vec2 uv; out vec4 o; uniform float t; uniform vec2 res; uniform float opacity;
+  float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float n(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.-2.*f);
+    return mix(mix(h(i), h(i+vec2(1,0)), u.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), u.x), u.y); }
+  float fbm(vec2 p, float e){ float v = 0., a = .5; mat2 r = mat2(.8,.6,-.6,.8);
+    for (int k = 0; k < 6; k++){ v += a * abs(n(p + e) * 2. - 1.); p = r * p * 2.03 + 3.1; e *= 1.3; a *= .5; } return v; }
+  void main(){
+    vec2 p = (uv * res) / 460. + vec2(t * 0.03, 0.);
+    float v = fbm(p, t * 0.05);
+    v = clamp((v - 0.5) * 1.3 + 0.5 - 0.08, 0., 1.);
+    vec3 ink = vec3(0.020, 0.027, 0.047), tint = vec3(0.114, 0.302, 0.431);
+    o = vec4(mix(ink, mix(ink, tint, 0.14 + 0.86 * v), opacity), 1.);
+  }`;
+  const make = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, make(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, make(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  return pr;
+})();
+const fog = K([[0, 0.7], [1.4, 1, 'inOut'], [19.55, 1], [19.85, 0.72, 'inOut'], [20.6, 0.9, 'inOut']]);
+function drawWorld(t) {
+  gl.viewport(0, 0, W, H);
+  gl.uniform1f(gl.getUniformLocation(prog, 't'), t);
+  gl.uniform2f(gl.getUniformLocation(prog, 'res'), W, H);
+  gl.uniform1f(gl.getUniformLocation(prog, 'opacity'), fog(t));
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+const grain = document.getElementById('grain');
+grain.width = W / 2; grain.height = H / 2;
+const gg = grain.getContext('2d');
+const grainImg = gg.createImageData(W / 2, H / 2);
+function drawGrain(t) {
+  const r = rand(91 + (Math.floor(t * 24) % 12));
+  const d = grainImg.data;
+  for (let i = 0; i < d.length; i += 4) { const v = r() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  gg.putImageData(grainImg, 0, 0);
+}
+
+// ── Lanes: envelopes scrolling through the playhead ─────────────────────────
+const fx = document.getElementById('fx');
+fx.width = W; fx.height = H;
+const g = fx.getContext('2d');
+const PX = 270; // pixels per second; a bar every 1/30 s
+/** Draws `arr` as mirrored bars around y; the past (left of the playhead) is lit. `gamma` > 1
+ * widens the gap between loud and quiet, so a dip of a few dB reads at a glance. */
+function lane(t, arr, y, half, color, alpha, reveal = 1, ghost, gamma = 1.3) {
+  if (alpha <= 0.001) return;
+  const span = (W / 2 / PX) * reveal;
+  g.save();
+  for (let b = Math.floor((t - span) * 30); b <= Math.ceil((t + span) * 30); b++) {
+    const tb = b / 30;
+    if (tb < 0 || tb > 24) continue;
+    const x = CX + (tb - t) * PX;
+    if (Math.abs(x - CX) > span * PX) continue;
+    const v = Math.max(env(arr, tb), env(arr, tb + 1 / 60));
+    const h = Math.max(1.5, half * clamp((v - 0.3) / 0.48) ** gamma);
+    const edge = clamp((span * PX - Math.abs(x - CX)) / 160);
+    g.globalAlpha = alpha * edge * (x <= CX ? 1 : 0.32);
+    g.fillStyle = color;
+    g.beginPath(); g.roundRect(x - 2.5, y - h, 5, h * 2, 2.5); g.fill();
+    if (ghost) {
+      const gh = Math.max(1.5, half * clamp((Math.max(env(ghost, tb), env(ghost, tb + 1 / 60)) - 0.3) / 0.48) ** gamma);
+      if (gh > h + 2) {
+        g.globalAlpha = alpha * edge * 0.45;
+        g.fillStyle = color;
+        g.fillRect(x - 2.5, y - gh, 5, 2); g.fillRect(x - 2.5, y + gh - 2, 5, 2);
+      }
+    }
+  }
+  g.restore();
+}
+function playhead(t, y0, y1, alpha) {
+  if (alpha <= 0.001) return;
+  g.save();
+  g.globalAlpha = alpha;
+  g.shadowColor = CYAN; g.shadowBlur = 18;
+  g.fillStyle = CYAN;
+  g.fillRect(CX - 1.5, y0, 3, y1 - y0);
+  g.restore();
+}
+const readout = text('t = 0.00', F.mono, 26, CYAN);
+const setReadout = (t) => { readout.textContent = `t = ${t.toFixed(2)}`; };
+
+// ── Captions (lines 1–5), top of frame, lit as heard ────────────────────────
+const captions = L.slice(0, 5).map((line) => text(line.text, F.line, 64, BONE, { by: 'words', tracking: -10 }));
+// Each caption is gone before the next one arrives in the same place.
+const captionEnd = [4.05, 8.42, 11.68, 15.92, 19.6];
+const captionStart = L.slice(0, 5).map((l, i) => Math.max(l.t - 0.35, i ? captionEnd[i - 1] + 0.27 : 0));
+let captionFit = captions.map(() => 1); // a caption wider than 1640 px is scaled to fit
+on((t) => captions.forEach((c, i) => {
+  const a = Math.min(ramp(t, captionStart[i], 0.3), 1 - ramp(t, captionEnd[i], 0.25, ease.inOut));
+  place(c, { x: CX, y: 200, o: a, s: captionFit[i] });
+  if (a > 0) karaoke(c, L[i].words, t);
+}));
+
+// ── 0–8.8 The narration lane, and the transcript it writes down ─────────────
+const laneY = K([[0, 560], [8.55, 560], [9.25, 1240, 'in']]);
+const laneA = K([[0, 0.6], [0.2, 1], [8.7, 1], [9.15, 0]]);
+const laneReveal = K([[0, 0.04], [1.0, 1, 'expo']]);
+const tw = L[1].words;
+const tokens = tw.map((w) => {
+  const box = el('div', { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' });
+  box.append(text(w.w.replace(/[.,]$/, '').toLowerCase(), F.mono, 34, CYAN));
+  box.append(text(w.s.toFixed(2), F.mono, 22, STEEL));
+  for (const c of box.children) { c.style.position = 'static'; }
+  return box;
+});
+const ROW = 830;
+let slots = [];
+function layoutTokens() {
+  const gap = 30;
+  const widths = tokens.map((b) => b.offsetWidth);
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (tokens.length - 1);
+  let x = CX - total / 2;
+  slots = widths.map((w) => { const c = x + w / 2; x += w + gap; return c; });
+}
+const rowFade = K([[8.42, 1], [8.8, 0, 'in']]);
+const scanX = (t) => lerp(slots[0] - 120, slots[slots.length - 1] + 120, ramp(t, 7.38, 0.85, ease.inOut));
+on((t) => {
+  tokens.forEach((b, i) => {
+    const p = ramp(t, tw[i].e, 0.5, ease.outExpo);
+    const flash = t > 7.38 && t < 8.4 ? Math.exp(-((scanX(t) - slots[i]) ** 2) / (2 * 60 ** 2)) : 0;
+    const o = t < tw[i].e ? 0 : clamp(p * 3) * rowFade(t);
+    place(b, { x: lerp(CX, slots[i], p), y: lerp(laneY(t), ROW, p), s: lerp(0.55, 1, p) * (1 + 0.08 * flash), o });
+    b.firstChild.style.color = flash > 0.05 ? BONE : CYAN;
+    b.firstChild.style.textShadow = flash > 0.05 ? `0 0 ${24 * flash}px rgba(111,231,242,${flash})` : 'none';
+  });
+});
+function drawScan(t) {
+  if (t < 7.38 || t > 8.3) return;
+  const x = scanX(t);
+  const a = Math.min(ramp(t, 7.38, 0.1), 1 - ramp(t, 8.1, 0.2)) * rowFade(t);
+  const grad = g.createLinearGradient(x - 90, 0, x + 90, 0);
+  grad.addColorStop(0, 'rgba(111,231,242,0)'); grad.addColorStop(0.5, `rgba(111,231,242,${0.35 * a})`); grad.addColorStop(1, 'rgba(111,231,242,0)');
+  g.fillStyle = grad; g.fillRect(x - 90, ROW - 60, 180, 120);
+  g.fillStyle = `rgba(111,231,242,${0.9 * a})`; g.fillRect(x - 1, ROW - 62, 2, 124);
+}
+
+// ── 8.8–12.2 Script against heard, word by word ─────────────────────────────
+const cw = L[2].words;
+const scriptRow = cw.map((w) => text(w.w, F.say, 56, BONE));
+const heardRow = cw.map((w) => text(w.w.replace(/[.,]$/, '').toLowerCase(), F.mono, 40, CYAN));
+const lab = (s) => text(s, F.mono, 24, STEEL, { tracking: 120 });
+const labScript = lab('SCRIPT'), labHeard = lab('HEARD');
+const counterLabel = text('words heard', F.mono, 28, STEEL);
+const counter = text('0 / 0', F.mono, 64, CYAN, { glow: '0 0 22px rgba(111,231,242,0.35)' });
+let cols = [];
+function layoutColumns() {
+  const gap = 44;
+  const widths = cw.map((_, i) => Math.max(scriptRow[i].offsetWidth, heardRow[i].offsetWidth));
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1);
+  let x = CX - total / 2;
+  cols = widths.map((w) => { const c = { x: x + w / 2, left: x, w }; x += w + gap; return c; });
+}
+const S3 = (t) => Math.min(ramp(t, 8.85, 0.4), 1 - ramp(t, 11.75, 0.3, ease.inOut));
+const total = data.heard.words; // the hearing check's own count for this narration
+on((t) => {
+  const a = S3(t);
+  const rise = lerp(30, 0, ramp(t, 8.85, 0.6));
+  cw.forEach((w, i) => {
+    place(scriptRow[i], { x: cols[i].x, y: 440 + rise, o: a * lerp(0.25, 1, ramp(t, w.s - 0.04, 0.16)) });
+    const h = ramp(t, w.e - 0.05, 0.2);
+    place(heardRow[i], { x: cols[i].x, y: 620 + rise + lerp(14, 0, h), o: a * h });
+  });
+  place(labScript, { x: cols[0].left, y: 372 + rise, ax: 0, o: a * 0.9 });
+  place(labHeard, { x: cols[0].left, y: 690 + rise, ax: 0, o: a * 0.9 });
+  const n = Math.round(data.heard.heard * ramp(t, 9.1, 2.3, ease.inOut));
+  counter.textContent = `${n} / ${total}`;
+  place(counterLabel, { x: CX, y: 790 + rise, o: a });
+  place(counter, { x: CX, y: 860 + rise, o: a });
+});
+function drawChecks(t) {
+  const a = S3(t);
+  if (a <= 0) return;
+  g.save();
+  g.strokeStyle = CYAN; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.shadowColor = CYAN; g.shadowBlur = 10;
+  cw.forEach((w, i) => {
+    const p = ramp(t, w.e, 0.25, ease.inOut);
+    if (p <= 0) return;
+    const x = cols[i].x, y = 530 + lerp(30, 0, ramp(t, 8.85, 0.6));
+    g.globalAlpha = a;
+    g.beginPath();
+    const pts = [[x - 14, y], [x - 4, y + 11], [x + 16, y - 13]];
+    g.moveTo(...pts[0]);
+    const first = clamp(p / 0.4), second = clamp((p - 0.4) / 0.6);
+    g.lineTo(lerp(pts[0][0], pts[1][0], first), lerp(pts[0][1], pts[1][1], first));
+    if (second > 0) g.lineTo(lerp(pts[1][0], pts[2][0], second), lerp(pts[1][1], pts[2][1], second));
+    g.stroke();
+  });
+  g.restore();
+}
+
+// ── 12.2–16.4 A misheard name, and how it was spoken ────────────────────────
+const nameScript = text('Thesium sees', F.say, 84, BONE);
+const nameHeard = text("These EMC's", F.mono, 64, WARM);
+const phon = text(`/${data.phonemes.Thesium}/`, F.mono, 112, CYAN, { by: 'chars', glow: '0 0 30px rgba(111,231,242,0.45)' });
+const labS4 = lab('SCRIPT'), labH4 = lab('HEARD  ·  AN EARLIER TAKE'), labK = lab('KOKORO SAID');
+const S4 = (t) => Math.min(ramp(t, 12.1, 0.45), 1 - ramp(t, 15.95, 0.3, ease.inOut));
+const strike = (t) => ramp(t, 13.14, 0.45, ease.inOut);
+on((t) => {
+  const a = S4(t);
+  const rise = lerp(28, 0, ramp(t, 12.15, 0.7));
+  place(labS4, { x: CX, y: 330 + rise, o: a * 0.9 });
+  place(nameScript, { x: CX, y: 405 + rise, o: a });
+  place(labH4, { x: CX, y: 520 + rise, o: a * 0.9 });
+  place(nameHeard, { x: CX, y: 590 + rise, o: a * lerp(1, 0.4, ramp(t, 15.1, 0.5)) });
+  const k = ramp(t, 14.16, 0.3);
+  place(labK, { x: CX, y: 715 + rise, o: a * k * 0.9 });
+  place(phon, { x: CX, y: 815 + rise, o: a });
+  phon.units.forEach((u, i) => {
+    const p = ramp(t, 14.2 + i * 0.07, 0.35);
+    u.style.opacity = String(p);
+    u.style.transform = `translateY(${lerp(18, 0, p)}px)`;
+    u.style.filter = `blur(${lerp(8, 0, p)}px)`;
+  });
+});
+function drawStrike(t) {
+  const a = S4(t);
+  const p = strike(t);
+  if (a <= 0 || p <= 0) return;
+  const w = nameHeard.offsetWidth + 30;
+  const y = 590 + lerp(28, 0, ramp(t, 12.15, 0.7));
+  g.save();
+  g.globalAlpha = a * lerp(1, 0.5, ramp(t, 15.1, 0.5));
+  g.fillStyle = WARM;
+  g.fillRect(CX - w / 2, y - 2, w * p, 4);
+  g.restore();
+}
+
+// ── 16.4–19.7 The music steps aside ─────────────────────────────────────────
+const S5 = (t) => Math.min(ramp(t, 16.27, 0.45), 1 - ramp(t, 19.5, 0.3, ease.inOut));
+const labMusic = lab('MUSIC'), labVoice = lab('VOICE');
+const dipNote = text(`music −${data.dip.toFixed(1)} dB while the voice speaks`, F.mono, 30, CYAN);
+on((t) => {
+  const a = S5(t);
+  place(labMusic, { x: 72, y: 470, ax: 0, o: a * 0.9 });
+  place(labVoice, { x: 72, y: 740, ax: 0, o: a * 0.9 });
+  place(dipNote, { x: CX, y: 920, o: a * ramp(t, 17.0, 0.4) });
+});
+
+// ── 20–24 The name ──────────────────────────────────────────────────────────
+const name = text('THESIUM', F.name, 170, BONE, { tracking: 20, glow: '0 0 40px rgba(200,235,255,0.25)' });
+const tag = text('Hears every word.', F.say, 66, BONE, { by: 'words', tracking: -8 });
+const cmd = text('node thesium.mjs sound voice', F.mono, 32, CYAN);
+const url = text('github.com/GrimNej/Thesium', F.mono, 30, STEEL);
+const nameScale = K([[19.95, 1.1], [20.35, 1, 'expo']]);
+on((t) => {
+  const a = ramp(t, 19.95, 0.15);
+  place(name, { x: CX, y: 440, s: nameScale(t), o: a });
+  place(tag, { x: CX, y: 590, o: ramp(t, 20.3, 0.3) });
+  if (t >= 20) karaoke(tag, L[5].words.slice(1), t, 0.18);
+  place(cmd, { x: CX, y: 800, o: ramp(t, 21.6, 0.4) });
+  place(url, { x: CX, y: 858, o: ramp(t, 21.8, 0.4) });
+});
+
+/** The whole narration as one small waveform, with a tick under every word that was heard. */
+const allWords = L.flatMap((l) => l.words);
+function drawReceipt(t) {
+  const a = ramp(t, 20.9, 0.5);
+  if (a <= 0) return;
+  const x0 = CX - 600, w = 1200, y = 690, n = 200;
+  g.save();
+  g.fillStyle = BONE;
+  for (let i = 0; i < n; i++) {
+    let v = 0;
+    for (let k = 0; k < 4; k++) v = Math.max(v, env(data.voice, ((i + k / 4) / n) * 24));
+    const h = Math.max(1, 24 * clamp((v - 0.3) / 0.48) ** 1.3);
+    g.globalAlpha = a * 0.55;
+    g.fillRect(x0 + (i / n) * w, y - h, 3, h * 2);
+  }
+  const sweep = ramp(t, 21.1, 0.9, ease.inOut);
+  g.fillStyle = CYAN;
+  g.shadowColor = CYAN; g.shadowBlur = 8;
+  for (const word of allWords) {
+    const f = word.s / 24;
+    if (f > sweep) continue;
+    g.globalAlpha = a;
+    g.fillRect(x0 + f * w - 1, y + 38, 3, 14);
+  }
+  g.restore();
+}
+
+await document.fonts.ready;
+captionFit = captions.map((c) => Math.min(1, 1640 / c.offsetWidth));
+layoutTokens();
+layoutColumns();
+
+window.render = (t) => {
+  drawWorld(t);
+  g.clearRect(0, 0, W, H);
+  // Lane through 8.8 s, then the two lanes of the music shot.
+  const ly = laneY(t);
+  lane(t, data.voice, ly, 130, BONE, laneA(t), laneReveal(t));
+  playhead(t, ly - 175, ly + 175, laneA(t) * ramp(t, 0.05, 0.3));
+  const a5 = S5(t);
+  lane(t, data.ducked, 470, 120, CYAN, a5, 0.8, data.music, 2);
+  lane(t, data.voice, 740, 120, BONE, a5, 0.8);
+  playhead(t, 320, 890, a5);
+  drawScan(t);
+  drawChecks(t);
+  drawStrike(t);
+  drawReceipt(t);
+  const ra = Math.max(laneA(t) * ramp(t, 0.15, 0.3), a5);
+  setReadout(t);
+  place(readout, { x: CX, y: a5 > 0 ? 300 : ly - 205, o: t < 9 ? laneA(t) * ramp(t, 0.15, 0.3) : ra });
+  drawGrain(t);
+  for (const u of updaters) u(t);
+};
+window.ready = true;
+</script>
+</body>
+</html>

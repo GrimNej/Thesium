@@ -1,0 +1,32 @@
+{
+  "voice": "af_heart",
+  "speed": 0.92,
+  "lines": [
+    {
+      "t": 0.7,
+      "text": "A model that makes films can't hear its own voice-over."
+    },
+    {
+      "t": 4.8,
+      "text": "So Thesium writes down what was said, and reads it back.",
+      "speed": 0.84
+    },
+    {
+      "t": 9,
+      "text": "Every word is checked against the script."
+    },
+    {
+      "t": 12.4,
+      "text": "When a name is misheard, it shows how the name was spoken.",
+      "speed": 0.84
+    },
+    {
+      "t": 16.6,
+      "text": "And the music steps aside whenever the voice speaks."
+    },
+    {
+      "t": 20,
+      "text": "Thesium. Hears every word."
+    }
+  ]
+}

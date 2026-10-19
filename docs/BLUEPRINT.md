@@ -196,7 +196,8 @@ pictures.
 - **Checks**: EBU R128 loudness, true peak, loudness range, low/mid balance, near-silent spans,
   waveform and spectrum pictures.
 - **Mastering** mixes the declared stems with per-stem gains, pads or trims to the exact duration,
-  normalises with two-pass `loudnorm` (−14 LUFS by default), limits, encodes AAC 256 kb/s 48 kHz,
+  normalises with two-pass `loudnorm` (−14 LUFS by default), limits, fades the last 0.4 s (so a
+  chord still ringing at the final frame does not click off), encodes AAC 256 kb/s 48 kHz,
   then measures the encoded file's true peak and re-encodes lower until it is at or below the target
   (−1 dBTP by default). This last step exists because AAC creates inter-sample peaks the limiter
   never saw; the showcase film's first master measured −0.3 dBTP before it was added.
@@ -290,11 +291,13 @@ On a 12-thread Windows 10 machine (CPU rendering):
 | EffectCraft: 7 full-resolution stills of the showcase film | ~6 s |
 | EffectCraft: 30 s preview of the showcase film at half scale | 120 s |
 | EffectCraft: 30 s 1080p master of the showcase film (fractal fog, glows, 3D, 60 expression particles) | 527 s |
-| Test suite (13 tests: end-to-end web, EffectCraft and Remotion films (Remotion opt-in), MCP, QR) | ~6 s; ~20 s with Remotion |
+| Test suite (17 tests: end-to-end web, command, EffectCraft and Remotion films (Remotion opt-in), narration, MCP, QR) | ~8 s; ~25 s with Remotion; CI on Linux (Node 22 and 24) ~50 s a job |
 | Web: the showcase film's 30 s master with 4 motion-blur samples (3,600 renders) | 145 s |
 | Web: the showcase film's 30 s master with 8 motion-blur samples (7,200 renders: WebGL fog, CSS 3D, SVG filters) | ~250 s |
 | Remotion 4.0.537: 3 stills of a 720p film, first bundle / bundle reused | 9.5 s / 5.3 s (41 s before bundling once) |
 | Remotion: 3 s preview at half scale | 5.9 s |
+| Narration: 6 lines spoken by Kokoro on the CPU, placed, levelled, transcribed and checked (Whisper small) | ~14 s; a changed line alone ~8 s |
+| Narrated film: 24 s 1080p web master with narration QA (balance and a transcription of the mix) | 61 s |
 
 ## 15. EffectCraft: what testing on it taught us
 
@@ -342,8 +345,14 @@ sharp, and runtime dependencies on Remotion and HyperFrames.
 
 ## 18. Roadmap
 
+Done since the first draft: narration with a hearing check (section 8), CI on Linux with Node 22
+and 24, Remotion bundled once per source state, and a narrated example (`examples/thesium-voice`).
+
 1. Engine parity benchmark: the same brief on every engine, scored by the critic, published
-   (started: `examples/thesium-launch` and `examples/thesium-launch-web`).
-2. Text-to-speech for narration through a local model.
-3. EffectCraft: re-test the "avoid" list on each release; use `--progress` when available.
-4. A Linux and macOS CI run of the test suite (Chrome and FFmpeg in the image).
+   (EffectCraft and web done: `examples/thesium-launch`, `examples/thesium-launch-web`; Remotion
+   and HyperFrames next).
+2. EffectCraft: re-test the "avoid" list on each release (0.11.1 is still the latest); use
+   `--progress` when it exists.
+3. macOS and Windows CI runners (Linux runs today; the suite passes on Windows locally).
+4. Narration beyond English: Kokoro has Spanish, French, Hindi, Italian, Japanese, Portuguese and
+   Mandarin voices; measure them with the hearing check before recommending them.

@@ -1,0 +1,28 @@
+{
+  "title": "Hears every word",
+  "engine": "web",
+  "entry": "film/index.html",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "duration": 24,
+  "motionBlur": {
+    "samples": 1,
+    "shutter": 0.5
+  },
+  "audio": {
+    "gains": {
+      "music": 0,
+      "sfx": -4,
+      "voice": 0
+    },
+    "duck": "auto",
+    "loudness": -14,
+    "truePeak": -1,
+    "voice": "audio/voice.wav",
+    "music": "audio/score.wav"
+  },
+  "params": {},
+  "engineOptions": {},
+  "language": "en"
+}

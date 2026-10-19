@@ -22,6 +22,14 @@ pair of rows, EffectCraft is above and web below, at the same moments:
 
 [![The EffectCraft and web masters side by side](docs/media/parity-sheet.jpg)](examples/thesium-launch-web/#comparison)
 
+[![Hears every word, a 24 s narrated film](docs/media/thesium-voice-poster.jpg)](docs/media/thesium-voice.mp4)
+
+**"Hears every word"**, 24 seconds with narration, on the web engine: the director cannot listen,
+so the film is the hearing check itself, drawn from Thesium's own output for its voice-over (the
+waveform, every word lit when Whisper heard it, the misheard name as phonemes, the music stepping
+aside). Its master: voice 10 LU over the music, 54 of 54 words heard in the final mix.
+[Watch it](docs/media/thesium-voice.mp4) · [source and making-of](examples/thesium-voice/)
+
 ## How it works
 
 Thesium asks one thing of a renderer: **draw the frame at time `t`**. Everything else is Thesium's
