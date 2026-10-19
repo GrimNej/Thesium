@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thesium Studio</title>
+<style>
+  :root {
+    --bg: #0d0f12; --panel: #15181d; --panel-2: #1b1f26; --line: #262b33; --text: #e9e6df; --muted: #8d939c;
+    --accent: #6fe7f2; --accent-ink: #062226; --warn: #f3c969; --bad: #ff7a6b; --good: #9be37b;
+    --radius: 10px; --mono: ui-monospace, 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f4f2ee; --panel: #ffffff; --panel-2: #f7f5f1; --line: #e3dfd8; --text: #1b1d21; --muted: #6b7078; --accent: #0b8a96; --accent-ink: #ffffff; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  header { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+  .brand { font-weight: 700; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+  .brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .spacer { flex: 1; }
+  select { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .job { min-width: 160px; display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .job.on { display: flex; }
+  .bar { flex: 1; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+  .bar b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; padding: 16px 18px; align-items: start; }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  .stage { background: #000; border-radius: var(--radius); overflow: hidden; position: relative; aspect-ratio: var(--ratio, 16/9); max-height: 72vh; margin: 0 auto; width: 100%; }
+  .stage video, .stage img.tuned { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .stage img.tuned { display: none; }
+  .stage.tuning img.tuned { display: block; }
+  .stage .badge { position: absolute; left: 12px; top: 12px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 6px; display: none; }
+  .stage.tuning .badge { display: block; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; color: #9aa; text-align: center; padding: 30px; }
+  .controls { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .time { font-family: var(--mono); font-size: 13px; min-width: 150px; }
+  .timeline { margin-top: 10px; position: relative; user-select: none; }
+  .sections { display: flex; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .sections div { border-right: 1px solid var(--line); font-size: 11px; color: var(--muted); padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--panel); cursor: pointer; }
+  .sections div:last-child { border-right: 0; }
+  .sections div.on { color: var(--text); background: var(--panel-2); }
+  .track { position: relative; height: 34px; margin-top: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  .track .played { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--accent) 18%, transparent); pointer-events: none; }
+  .track .head { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--accent); pointer-events: none; }
+  .track .tick { position: absolute; bottom: 0; width: 1px; height: 7px; background: var(--line); pointer-events: none; }
+  .track .pin { position: absolute; top: 4px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--warn); cursor: pointer; }
+  .track .pin.done { background: var(--good); opacity: .6; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+  aside { display: flex; flex-direction: column; gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .count { background: var(--panel-2); border-radius: 10px; padding: 0 7px; font-size: 11px; color: var(--text); }
+  .note { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 8px; border-radius: 8px; border: 1px solid transparent; }
+  .note:hover { border-color: var(--line); background: var(--panel-2); }
+  .note img { width: 64px; aspect-ratio: var(--ratio, 16/9); object-fit: cover; border-radius: 4px; background: #000; cursor: pointer; }
+  .note .t { font-family: var(--mono); font-size: 12px; color: var(--accent); cursor: pointer; }
+  .note .x { white-space: pre-wrap; word-break: break-word; }
+  .note.done .x { color: var(--muted); text-decoration: line-through; }
+  .note .acts { display: flex; gap: 6px; margin-top: 4px; }
+  .note .acts button { padding: 1px 8px; font-size: 12px; }
+  .compose { display: none; margin-bottom: 10px; }
+  .compose.on { display: block; }
+  textarea { width: 100%; min-height: 70px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .param { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; margin: 8px 0; }
+  .param label { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+  .param input[type=range] { width: 100%; accent-color: var(--accent); }
+  .param input[type=text], .param select { width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+  .param input[type=color] { width: 44px; height: 28px; border: 1px solid var(--line); border-radius: 6px; background: none; padding: 0; }
+  .param .val { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .muted { color: var(--muted); }
+  pre.status { white-space: pre-wrap; font-family: var(--mono); font-size: 12px; margin: 0; color: var(--muted); }
+  .issues { color: var(--warn); font-size: 12px; margin-top: 6px; }
+  .toast { position: fixed; right: 18px; bottom: 18px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; max-width: 420px; display: none; white-space: pre-wrap; z-index: 10; }
+  .toast.on { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><i></i>Thesium</div>
+  <div class="title" id="title">…</div>
+  <div class="meta" id="meta"></div>
+  <div class="spacer"></div>
+  <div class="job" id="job"><span id="jobLabel"></span><div class="bar"><b id="jobBar"></b></div></div>
+  <select id="version" title="Version"></select>
+  <button id="previewBtn" title="Render a fast low-resolution preview">Preview</button>
+  <button id="masterBtn" class="primary" title="Render the delivery with mastered sound">Master</button>
+</header>
+<main>
+  <section>
+    <div class="stage" id="stage">
+      <video id="video" preload="auto" playsinline></video>
+      <img class="tuned" id="tuned" alt="Tuned frame">
+      <div class="badge">Tuned frame · not yet rendered into the film</div>
+      <div class="empty" id="empty">No render yet. Press <b>&nbsp;Preview&nbsp;</b> or ask the director to master the film.</div>
+    </div>
+    <div class="controls">
+      <button id="play" title="Play / pause (Space)">Play</button>
+      <button id="back" title="Previous frame (←)">◀</button>
+      <button id="fwd" title="Next frame (→)">▶</button>
+      <span class="time" id="time">0.00 / 0.00 s</span>
+      <div class="spacer"></div>
+      <button id="noteBtn" title="Pin a note at this moment (N)">Add note</button>
+    </div>
+    <div class="timeline">
+      <div class="sections" id="sections"></div>
+      <div class="track" id="track"><div class="played" id="played"></div><div class="head" id="head"></div></div>
+    </div>
+    <div class="hint"><kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> frame · <kbd>Shift</kbd> + arrows 1 s · <kbd>N</kbd> note · click the track to seek</div>
+  </section>
+  <aside>
+    <div class="card">
+      <h2>Notes <span class="count" id="noteCount">0</span></h2>
+      <div class="compose" id="compose">
+        <div class="muted" id="composeAt"></div>
+        <textarea id="noteText" placeholder="What should change here? Be as specific as you like."></textarea>
+        <div class="row"><button class="primary" id="saveNote">Pin note</button><button id="cancelNote">Cancel</button></div>
+      </div>
+      <div id="notes"><div class="muted">Pause where something should change and press N.</div></div>
+      <div class="row" id="handoff" style="display:none"><button id="copyHandoff">Copy request for the director</button></div>
+    </div>
+    <div class="card" id="tuneCard" style="display:none">
+      <h2>Tune</h2>
+      <div id="params"></div>
+      <div class="row"><button id="tunePreview">Show at this frame</button><button class="primary" id="tuneApply" disabled>Apply to film</button><button id="tuneReset">Reset</button></div>
+      <div class="hint">Applying saves the values in thesium.json. Preview or master to see them in motion.</div>
+    </div>
+    <div class="card">
+      <h2>Status</h2>
+      <pre class="status" id="status"></pre>
+      <div class="issues" id="issues"></div>
+    </div>
+  </aside>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const video = $('video');
+let film = null;
+let tuning = {};
+let toastTimer;
+
+const toast = (text) => {
+  $('toast').textContent = text;
+  $('toast').classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('on'), 5000);
+};
+const api = async (path, options = {}) => {
+  const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options, body: options.body ? JSON.stringify(options.body) : undefined });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || response.statusText);
+  return data;
+};
+const fps = () => film?.fps || 30;
+const duration = () => (Number.isFinite(video.duration) && video.duration) || film?.duration || 1;
+const fmt = (t) => t.toFixed(2);
+const escape = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+function render(next) {
+  const keepTime = video.currentTime;
+  const previous = film;
+  film = next;
+  document.documentElement.style.setProperty('--ratio', `${film.width}/${film.height}`);
+  document.title = `${film.title} · Thesium Studio`;
+  $('title').textContent = film.title;
+  $('meta').textContent = `${film.engine} · ${film.width}×${film.height} · ${film.fps} fps · ${film.duration} s`;
+  const select = $('version');
+  const chosen = select.value;
+  select.innerHTML = film.versions.map((v) => `<option value="${v.url}">${v.label}</option>`).join('');
+  if (film.versions.some((v) => v.url === chosen)) select.value = chosen;
+  select.style.display = film.versions.length ? '' : 'none';
+  $('empty').style.display = film.versions.length ? 'none' : 'grid';
+  if (film.versions.length && video.getAttribute('src') !== select.value) {
+    video.src = select.value;
+    video.addEventListener('loadedmetadata', () => { video.currentTime = Math.min(keepTime, duration()); }, { once: true });
+  }
+  const v = film.versions.find((x) => x.url === select.value);
+  $('issues').textContent = v?.issues?.length ? `QA: ${v.issues.join('; ')}` : '';
+  $('status').textContent = film.status;
+  drawSections();
+  drawNotes();
+  if (!previous || JSON.stringify(previous.params) !== JSON.stringify(film.params)) drawParams();
+  setJob(film.job);
+}
+
+function drawSections() {
+  const s = film.timeline.sections || [];
+  const d = film.duration;
+  $('sections').innerHTML = s.length
+    ? s.map((x, i) => {
+        const end = s[i + 1]?.start ?? d;
+        return `<div data-t="${x.start}" style="width:${((end - x.start) / d) * 100}%" title="${escape(x.name)} · ${fmt(x.start)} s">${escape(x.name)}</div>`;
+      }).join('')
+    : '<div style="width:100%">No sections named in timeline.json</div>';
+  for (const el of $('sections').children) el.onclick = () => el.dataset.t && seek(Number(el.dataset.t));
+  const track = $('track');
+  track.querySelectorAll('.tick,.pin').forEach((e) => e.remove());
+  for (let t = 1; t < d; t++) {
+    const tick = document.createElement('div');
+    tick.className = 'tick';
+    tick.style.left = `${(t / d) * 100}%`;
+    if (t % 5 === 0) tick.style.height = '12px';
+    track.append(tick);
+  }
+  for (const n of film.notes) {
+    const pin = document.createElement('div');
+    pin.className = `pin ${n.status === 'done' ? 'done' : ''}`;
+    pin.style.left = `${(n.time / d) * 100}%`;
+    pin.title = `${fmt(n.time)} s · ${n.text}`;
+    pin.onclick = (e) => { e.stopPropagation(); seek(n.time); };
+    track.append(pin);
+  }
+}
+
+function drawNotes() {
+  const open = film.notes.filter((n) => n.status !== 'done');
+  $('noteCount').textContent = String(open.length);
+  $('handoff').style.display = open.length ? 'flex' : 'none';
+  if (!film.notes.length) { $('notes').innerHTML = '<div class="muted">Pause where something should change and press N.</div>'; return; }
+  $('notes').innerHTML = film.notes.map((n) => `
+    <div class="note ${n.status === 'done' ? 'done' : ''}" data-id="${n.id}">
+      ${n.frame ? `<img src="/${n.frame}" alt="" data-seek="${n.time}">` : '<div></div>'}
+      <div>
+        <div class="t" data-seek="${n.time}">${fmt(n.time)} s</div>
+        <div class="x">${escape(n.text)}</div>
+        <div class="acts">
+          <button data-act="toggle">${n.status === 'done' ? 'Reopen' : 'Done'}</button>
+          <button data-act="delete">Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+  for (const el of $('notes').querySelectorAll('[data-seek]')) el.onclick = () => seek(Number(el.dataset.seek));
+  for (const el of $('notes').querySelectorAll('[data-act]')) {
+    el.onclick = async () => {
+      const id = el.closest('.note').dataset.id;
+      const note = film.notes.find((n) => n.id === id);
+      if (el.dataset.act === 'delete') await api(`/api/notes/${id}`, { method: 'DELETE' });
+      else await api(`/api/notes/${id}`, { method: 'PATCH', body: { status: note.status === 'done' ? 'open' : 'done' } });
+      refresh();
+    };
+  }
+}
+
+function drawParams() {
+  const entries = Object.entries(film.params || {});
+  $('tuneCard').style.display = entries.length ? '' : 'none';
+  tuning = {};
+  $('tuneApply').disabled = true;
+  $('params').innerHTML = entries.map(([id, p]) => {
+    const label = `<label for="p-${id}" title="${escape(p.hint || id)}">${escape(p.label || id)}</label>`;
+    if (p.type === 'number')
+      return `<div class="param">${label}<div><input type="range" id="p-${id}" data-id="${id}" min="${p.min ?? 0}" max="${p.max ?? 100}" step="${p.step ?? 'any'}" value="${p.value}"><span class="val" id="v-${id}">${p.value}</span></div></div>`;
+    if (p.type === 'color') return `<div class="param">${label}<div><input type="color" id="p-${id}" data-id="${id}" value="${p.value}"> <span class="val" id="v-${id}">${p.value}</span></div></div>`;
+    if (p.type === 'boolean') return `<div class="param">${label}<input type="checkbox" id="p-${id}" data-id="${id}" ${p.value ? 'checked' : ''}></div>`;
+    if (p.type === 'choice') return `<div class="param">${label}<select id="p-${id}" data-id="${id}">${p.options.map((o) => `<option ${o === p.value ? 'selected' : ''}>${escape(o)}</option>`).join('')}</select></div>`;
+    return `<div class="param">${label}<input type="text" id="p-${id}" data-id="${id}" value="${escape(p.value)}"></div>`;
+  }).join('');
+  for (const input of $('params').querySelectorAll('[data-id]')) {
+    input.oninput = () => {
+      const id = input.dataset.id;
+      const value = input.type === 'checkbox' ? input.checked : input.type === 'range' ? Number(input.value) : input.value;
+      tuning[id] = value;
+      const label = $(`v-${id}`);
+      if (label) label.textContent = String(value);
+      $('tuneApply').disabled = false;
+      scheduleTunedFrame();
+    };
+  }
+}
+
+let tuneTimer;
+function scheduleTunedFrame() {
+  clearTimeout(tuneTimer);
+  tuneTimer = setTimeout(showTunedFrame, 450);
+}
+async function showTunedFrame() {
+  if (!Object.keys(tuning).length) { $('stage').classList.remove('tuning'); return; }
+  video.pause();
+  $('stage').classList.add('tuning');
+  $('stage').querySelector('.badge').textContent = 'Rendering tuned frame…';
+  try {
+    const { url } = await api('/api/still', { method: 'POST', body: { time: video.currentTime || 0, params: tuning } });
+    $('tuned').src = `${url}?t=${Date.now()}`;
+    $('stage').querySelector('.badge').textContent = `Tuned frame at ${fmt(video.currentTime || 0)} s · not yet rendered into the film`;
+  } catch (error) {
+    toast(`Could not render the tuned frame: ${error.message}`);
+    $('stage').classList.remove('tuning');
+  }
+}
+
+function setJob(job) {
+  const busy = Boolean(job);
+  $('job').classList.toggle('on', busy);
+  $('previewBtn').disabled = busy;
+  $('masterBtn').disabled = busy;
+  if (!busy) return;
+  $('jobLabel').textContent = `${job.kind} ${job.total ? `${job.done}/${job.total}` : '…'}`;
+  $('jobBar').style.width = job.total ? `${(job.done / job.total) * 100}%` : '5%';
+}
+
+function seek(t) {
+  $('stage').classList.remove('tuning');
+  video.currentTime = Math.max(0, Math.min(duration() - 1 / fps() / 2, t));
+}
+function tick() {
+  const t = video.currentTime || 0;
+  const d = duration();
+  $('time').textContent = `${fmt(t)} / ${fmt(d)} s`;
+  $('played').style.width = `${(t / d) * 100}%`;
+  $('head').style.left = `${(t / d) * 100}%`;
+  const s = film?.timeline.sections || [];
+  [...$('sections').children].forEach((el, i) => el.classList.toggle('on', t >= (s[i]?.start ?? 1e9) && t < (s[i + 1]?.start ?? 1e9)));
+  $('play').textContent = video.paused ? 'Play' : 'Pause';
+  requestAnimationFrame(tick);
+}
+
+function openCompose() {
+  video.pause();
+  $('compose').classList.add('on');
+  $('composeAt').textContent = `Note at ${fmt(video.currentTime || 0)} s`;
+  $('noteText').focus();
+}
+async function saveNote() {
+  const text = $('noteText').value.trim();
+  if (!text) return;
+  await api('/api/notes', { method: 'POST', body: { time: video.currentTime || 0, text, video: video.getAttribute('src') || '' } });
+  $('noteText').value = '';
+  $('compose').classList.remove('on');
+  refresh();
+}
+
+async function refresh() { render(await api('/api/film')); }
+
+$('play').onclick = () => (video.paused ? video.play() : video.pause());
+$('back').onclick = () => seek(video.currentTime - 1 / fps());
+$('fwd').onclick = () => seek(video.currentTime + 1 / fps());
+$('noteBtn').onclick = openCompose;
+$('saveNote').onclick = saveNote;
+$('cancelNote').onclick = () => $('compose').classList.remove('on');
+$('version').onchange = () => { video.src = $('version').value; refresh(); };
+$('track').onclick = (e) => {
+  const r = $('track').getBoundingClientRect();
+  seek(((e.clientX - r.left) / r.width) * duration());
+};
+$('previewBtn').onclick = () => api('/api/preview', { method: 'POST' }).catch((e) => toast(e.message));
+$('masterBtn').onclick = () => api('/api/master', { method: 'POST' }).catch((e) => toast(e.message));
+$('tunePreview').onclick = showTunedFrame;
+$('tuneReset').onclick = () => { drawParams(); $('stage').classList.remove('tuning'); };
+$('tuneApply').onclick = async () => {
+  await api('/api/params', { method: 'POST', body: { values: tuning } });
+  toast('Saved in thesium.json. Preview or master to render them in motion.');
+  tuning = {};
+  $('tuneApply').disabled = true;
+};
+$('copyHandoff').onclick = async () => {
+  const open = film.notes.filter((n) => n.status !== 'done');
+  const text = `Please address my ${open.length} note(s) on "${film.title}". Run \`node thesium.mjs notes\` in the film folder to see each one with the exact frame, fix them all, then master a new version.\n\n${open.map((n) => `- ${fmt(n.time)} s: ${n.text}`).join('\n')}`;
+  await navigator.clipboard.writeText(text);
+  toast('Copied. Paste it to the director (Claude) in your session.');
+};
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('textarea, input, select')) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.id === 'noteText') saveNote();
+    if (e.key === 'Escape') $('compose').classList.remove('on');
+    return;
+  }
+  if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+  else if (e.key === 'ArrowLeft') seek(video.currentTime - (e.shiftKey ? 1 : 1 / fps()));
+  else if (e.key === 'ArrowRight') seek(video.currentTime + (e.shiftKey ? 1 : 1 / fps()));
+  else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openCompose(); }
+});
+
+const events = new EventSource('/api/events');
+events.addEventListener('job', (e) => setJob(JSON.parse(e.data)));
+events.addEventListener('notes', () => refresh());
+events.addEventListener('film', (e) => { const f = JSON.parse(e.data); if (f) render(f); });
+events.addEventListener('done', (e) => { const d = JSON.parse(e.data); toast(`${d.kind} finished.\n${d.text.split('\n')[0]}`); render(d.film); $('version').value = d.film.versions[0]?.url; video.src = $('version').value; });
+events.addEventListener('failed', (e) => { const d = JSON.parse(e.data); toast(`${d.kind} failed: ${d.error}`); });
+
+refresh().then(() => requestAnimationFrame(tick)).catch((e) => toast(e.message));
+</script>
+</body>
+</html>
