@@ -1,0 +1,20 @@
+{
+  "bpm": 120,
+  "offset": 0,
+  "beatsPerBar": 4,
+  "sections": [
+    { "start": 0, "name": "Hook" },
+    { "start": 3, "name": "Premise" },
+    { "start": 8, "name": "Reveal" },
+    { "start": 12, "name": "Sees every frame" },
+    { "start": 15, "name": "Any engine" },
+    { "start": 17.5, "name": "Notes" },
+    { "start": 20, "name": "Same film" },
+    { "start": 25, "name": "End" }
+  ],
+  "cues": [
+    { "t": 8, "name": "impact" },
+    { "t": 24.6, "name": "near-silence" },
+    { "t": 26, "name": "final chord" }
+  ]
+}
