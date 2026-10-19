@@ -1,6 +1,6 @@
 # Thesium build log and resume point
 
-Paused on 2026-10-19 at the owner's request. This file is the record of where the work stands,
+Paused on 2026-10-19 at the owner's request (last checkpoint: commit `docs: README and MIT license`). This file is the record of where the work stands,
 what was decided and verified, and exactly what comes next.
 
 ## The commission (summary)
@@ -104,8 +104,9 @@ Studio: notes with saved frames, tuned-parameter stills, versions, sections; scr
 4. The proof: a showcase film made with the EffectCraft engine through Thesium following the skill
    (plan → build → look → sound → check → master → critic → polish), ideally the same brief on the web
    engine to show parity. Fold any new recipe lessons back into the guide.
-5. Docs: README, `docs/BLUEPRINT.md` (the detailed implementation blueprint the owner asked for),
-   `docs/ARCHITECTURE.md`, CREDITS/licence (MIT for Thesium; third-party MIT, CC BY 4.0, OFL notices).
+5. Docs: README and MIT LICENSE are done. Still to write: `docs/BLUEPRINT.md` (the detailed
+   implementation blueprint the owner asked for, citing the showcase film's measured results),
+   `docs/ARCHITECTURE.md`, and a Thesium-wide refresh of `knowledge/THIRD_PARTY.md`.
 6. Commit and push to `origin main`; optionally report EffectCraft issues upstream (ask the owner first).
 
 Scratch experiments live in the session scratchpad (`scratchpad/films/{smoke-web,smoke-ec,lab,lab2,lab3}`);
