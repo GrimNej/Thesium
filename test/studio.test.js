@@ -46,6 +46,34 @@ test('a web film renders stills and passes check', { skip: !(await findChrome())
   }
 });
 
+const { findEffectCraft } = await import('../src/engines/effectcraft.js');
+
+test('an EffectCraft film builds, renders and passes check', { skip: !(await findEffectCraft()) && 'EffectCraft not installed' }, async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'thesium-ec-'));
+  const film = path.join(dir, 'film');
+  try {
+    assert.equal(await quiet(() => main(['new', film, '--engine', 'effectcraft', '--size', '640x360', '--duration', '2', '--title', 'EC test'])), 0);
+    await writeFile(
+      path.join(film, 'film', 'build.jsx'),
+      `var comp = T.film({ background: "#05070c" });
+var title = T.text("THESIUM", { font: "Unbounded", style: "Black", size: 80, fill: "#f3efe6" });
+T.reveal(title, 0.2, { by: "chars", duration: 0.8 });
+T.glow(title, { threshold: 60, radius: 20, intensity: 0.8 });
+var ring = T.shape("ellipse", { size: [300, 300], fill: false, stroke: "#6fe7f2", strokeWidth: 3 });
+T.key(ring, T.shapeItem(ring, "trim") + "/end", [[0, 0], [1.5, 100, "expo"]]);
+`,
+    );
+    assert.equal(await quiet(() => main(['--workspace', film, 'still', '1.5'])), 0);
+    assert.ok(existsSync(path.join(film, 'review', 'still-1.50.jpg')));
+    assert.equal(await quiet(() => main(['--workspace', film, 'check'])), 0);
+    // A font that does not exist must fail the build instead of falling back silently.
+    await writeFile(path.join(film, 'film', 'build.jsx'), 'T.film(); T.text("x", { font: "No Such Family", style: "Bold" });\n');
+    assert.equal(await quiet(() => main(['--workspace', film, 'build'])), 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test('the MCP server answers initialize and lists its tools', async () => {
   const child = spawn(process.execPath, [CLI, 'mcp'], { stdio: ['pipe', 'pipe', 'inherit'] });
   const replies = [];
