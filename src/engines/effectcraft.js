@@ -135,7 +135,7 @@ const RULES = [
 export const effectcraftEngine = {
   id: 'effectcraft',
   label: 'EffectCraft (After Effects-style compositor)',
-  summary: 'Layers, keyframes, 300+ effects, text animators, 3D cameras and lights, particles',
+  summary: 'Layers, keyframes, 300+ effects (glow, fractal textures, flares), text animators, 3D cameras and lights',
   guide: 'engines/effectcraft.md',
 
   async cli() {

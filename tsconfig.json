@@ -13,5 +13,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["bin/**/*.js", "src/**/*.js", "test/**/*.js"]
+  "include": ["cli/**/*.js", "src/**/*.js", "test/**/*.js"]
 }

@@ -93,13 +93,11 @@ Studio: notes with saved frames, tuned-parameter stills, versions, sections; scr
 
 ## Next steps, in order
 
-1. `knowledge/engines/effectcraft.md` from the verified findings above (contract, T kit reference,
-   craft → EffectCraft map, recipe cookbook, what to avoid in 0.11.1), plus `remotion.md`,
-   `hyperframes.md`, `command.md`; update `THIRD_PARTY.md`.
-2. `skills/thesium/SKILL.md` (director workflow, < 500 lines, `${CLAUDE_PLUGIN_ROOT}` paths),
-   `agents/critic.md` (fresh-eyes critic, from Vmotion's 55-studio-critic + frame-checker),
-   `.claude-plugin/plugin.json` + `marketplace.json` (no top-level `bin/` folder: it blocks claude.ai
-   installs; the CLI lives at `bin/`, so consider renaming to `cli/` or referencing by path), `.mcp.json`.
+1. Done: engine guides (`effectcraft.md` from verified findings, `remotion.md`, `hyperframes.md`,
+   `command.md`), `skills/thesium/SKILL.md`, `agents/critic.md`, `.claude-plugin/plugin.json` and
+   `marketplace.json` (validated with `claude plugin validate`). The CLI moved from `bin/` to `cli/`
+   because a top-level `bin/` blocks claude.ai/Cowork plugin installs. Still to do: `THIRD_PARTY.md`
+   refresh for Thesium.
 3. Tests with `node:test` (manifest, sample times, parse size, framecheck on synthetic frames, CDP smoke,
    EffectCraft smoke when installed, MCP handshake).
 4. The proof: a showcase film made with the EffectCraft engine through Thesium following the skill

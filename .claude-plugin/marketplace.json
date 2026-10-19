@@ -1,0 +1,13 @@
+{
+  "name": "thesium",
+  "owner": { "name": "GrimNej", "url": "https://github.com/GrimNej" },
+  "description": "Thesium: an engine-agnostic motion studio for frontier models.",
+  "plugins": [
+    {
+      "name": "thesium",
+      "source": "./",
+      "description": "Direct, animate, score and master films in code on any engine, looking at your own frames.",
+      "category": "creative"
+    }
+  ]
+}

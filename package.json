@@ -21,10 +21,10 @@
     "hyperframes"
   ],
   "bin": {
-    "thesium": "bin/thesium.js"
+    "thesium": "cli/thesium.js"
   },
   "files": [
-    "bin",
+    "cli",
     "src",
     "kit",
     "knowledge",

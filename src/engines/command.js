@@ -9,7 +9,7 @@
 //    "parallel": 2 } }
 //
 // Placeholders: {t} seconds, {frame} index, {frame4}/{frame6} zero-padded, {out} target PNG,
-// {outBase} target without extension, {from} {to} {fps} {dir} {width} {height} {params} (JSON file),
+// {outBase} target without extension, {from} {to} {fromFrame} {toFrame} {fps} {dir} {width} {height} {params} (JSON file),
 // {workspace}. Commands run through the shell in the workspace.
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile, rename } from 'node:fs/promises';
@@ -93,7 +93,9 @@ export const commandEngine = {
             async sequence({ from, to, fps, dir }) {
               await rm(dir, { recursive: true, force: true });
               await mkdir(dir, { recursive: true });
-              await sh(fill(c.sequence, { ...base, from, to, fps, dir }), workspace, o.signal);
+              const fromFrame = Math.round(from * fps);
+              const toFrame = Math.round(to * fps) - 1;
+              await sh(fill(c.sequence, { ...base, from, to, fps, dir, fromFrame, toFrame }), workspace, o.signal);
               const files = (await readdir(dir)).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort();
               const ext = path.extname(files[0] || '.png').toLowerCase();
               for (let i = 0; i < files.length; i++) await rename(path.join(dir, files[i]), path.join(dir, `f_${String(i).padStart(6, '0')}${ext}`));
