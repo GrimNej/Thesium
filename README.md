@@ -15,7 +15,12 @@ HyperFrames, or any tool with a command line.
 **"Thesium"**, a 30-second launch film directed through Thesium on **EffectCraft**: fractal fog,
 a playhead that carries through every shot, a lit 3D wall of real renders, liquid type, an original
 score. [Watch it](docs/media/thesium-launch-effectcraft.mp4) · [its source and making-of](examples/thesium-launch/)
-· [the same film on the web engine](examples/thesium-launch-web/).
+
+The same plan, assets and score, made again on the **web** engine
+([watch](docs/media/thesium-launch-web.mp4) · [source](examples/thesium-launch-web/)). In each
+pair of rows, EffectCraft is above and web below, at the same moments:
+
+[![The EffectCraft and web masters side by side](docs/media/parity-sheet.jpg)](examples/thesium-launch-web/#comparison)
 
 ## How it works
 

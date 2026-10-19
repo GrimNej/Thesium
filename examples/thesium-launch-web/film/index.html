@@ -320,7 +320,7 @@ const wall = el('div', { width: `${W}px`, height: `${H}px`, perspective: '1500px
 const world3d = el('div', { width: `${W}px`, height: `${H}px`, transformStyle: 'preserve-3d' }, wall);
 const frames = ['ec-title', 'web-title', 'ec-3d-cards', 'ec-liquid', 'ec-gradient', 'ec-flare', 'ec-impact', 'ec-embers'];
 const imgs = [];
-for (let i = 0; i < 15; i++) {
+for (let i = 0; i < 20; i++) {
   const col = i % 5, row = Math.floor(i / 5);
   const src = frames[(col * 2 + row * 3) % frames.length];
   const card = el('div', { width: '595px', height: '335px' }, world3d);
@@ -333,7 +333,7 @@ for (let i = 0; i < 15; i++) {
   const near = clamp(1 - Math.hypot(col - 1.2, row - 0.6) / 3.2);
   light.style.background = `linear-gradient(115deg, rgba(255,255,255,${0.10 * near}) 0%, rgba(0,0,0,${0.55 - 0.4 * near}) 100%)`;
 }
-const scrim = el('div', { width: `${W}px`, height: '470px', top: `${H - 470}px`, background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.93) 64%)' }, wall);
+const scrim = el('div', { width: `${W}px`, height: '470px', top: `${H - 470}px`, background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.78) 62%, rgba(0,0,0,0.72) 100%)' }, wall);
 const seesLine = text('It sees every frame it makes.', FONTS.statement, 82, BONE, { by: 'words', tracking: -10, parent: wall });
 const camX = K([[11.5, -520], [15.1, 380, 'linear']]);
 const camZ = K([[11.5, -350], [15.1, 0, 'linear']]);
