@@ -25,6 +25,8 @@ Look
   preview [--scale 0.5] [--from s] [--to s] [--step s] [--blur]
                                  fast low-res film + sheets + frame check → review/preview*
   check [--fast]                 contract, engine rules, language and determinism → PASS/FAIL
+  frames <video> [--fps 30] [--key green] [--width px]
+                                 frame-accurate (optionally keyed) sequence → assets/frames/<name>/
 
 Sound (Python 3 with numpy and scipy)
   sound score <script.py>        run a score script with the kit's synth on its path
@@ -178,6 +180,16 @@ export async function main(argv) {
         return print(await ops.master(workspace(), { draft: Boolean(flags.draft), log, onProgress: progress('frames') }));
       case 'review':
         return print(await ops.reviewPackage(workspace()));
+      case 'frames':
+        if (!args[0]) throw new Error('Usage: frames <video> [--fps 30] [--key green|blue|#rrggbb] [--width px] [--name id]');
+        return print(
+          await ops.extractFrames(workspace(), args[0], {
+            fps: num(flags.fps),
+            key: typeof flags.key === 'string' ? flags.key : undefined,
+            width: num(flags.width),
+            name: typeof flags.name === 'string' ? flags.name : undefined,
+          }),
+        );
       case 'notes':
         return print(await ops.notes(workspace(), { done: flags.done ? [String(flags.done), ...args] : undefined }));
       case 'sound': {
@@ -195,7 +207,10 @@ export async function main(argv) {
       }
       case 'effects': {
         const { listEffects } = await import('./engines/effectcraft.js');
-        const found = await listEffects(args.join(' '));
+        const filter = args.join(' ');
+        let found = await listEffects(filter);
+        const exact = found.filter((e) => e.name.toLowerCase() === filter.toLowerCase());
+        if (exact.length) found = exact;
         if (!found.length) console.log('No effect matches. Run without a filter for the full list.');
         const detailed = found.length <= 6;
         for (const e of found) {

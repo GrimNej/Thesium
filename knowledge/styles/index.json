@@ -1,0 +1,303 @@
+[
+ {
+  "slug": "cel-anime-80s",
+  "title": "80s Cel Anime",
+  "category": "Cartoon & Anime",
+  "line": "A courier girl rides through a rain-soaked neon city to deliver a tape before the dawn launch.",
+  "uses": "Music videos, Game trailers, Nostalgia"
+ },
+ {
+  "slug": "midcentury-toon",
+  "title": "Mid-century Cartoon",
+  "category": "Cartoon & Anime",
+  "line": "A robot vacuum set up in three steps, told like a 1950s classroom film: place the dock, connect the app, press start.",
+  "uses": "Product set-up guides, Help-centre explainers, How-to steps"
+ },
+ {
+  "slug": "rubber-hose",
+  "title": "1930s Rubber Hose Cartoon",
+  "category": "Cartoon & Anime",
+  "line": "A coffee cup chases a runaway sugar cube around the kitchen, 1930s-cartoon style.",
+  "uses": "Food & drink, Retro ads, Kids"
+ },
+ {
+  "slug": "scifi-toon",
+  "title": "Sci-Fi Sitcom Toon",
+  "category": "Cartoon & Anime",
+  "line": "A jaded genius opens a portal just to buy coffee and tumbles through ever-stranger universes.",
+  "uses": "Comedy, Tech brands, Social shorts"
+ },
+ {
+  "slug": "backrooms",
+  "title": "Liminal Found Footage",
+  "category": "Cinema & Eras",
+  "line": "A new night-shift hire films their first night in an endless yellow office, following the rules on the wall.",
+  "uses": "Horror, Mystery & ARG, Game teasers"
+ },
+ {
+  "slug": "silent-film",
+  "title": "1920s Silent Film",
+  "category": "Cinema & Eras",
+  "line": "A baker's boy chases a runaway loaf downhill, then breaks it in half for a hungry girl.",
+  "uses": "Comedy, Retro brands, Silent storytelling"
+ },
+ {
+  "slug": "paper-lantern",
+  "title": "Paper-cut Lightbox",
+  "category": "East Asian Traditions",
+  "line": "A single mooncake tells the Mid-Autumn story of reunion and longing inside a glowing paper-cut lightbox.",
+  "uses": "Festivals, Gift brands, Cultural stories"
+ },
+ {
+  "slug": "papercut-red",
+  "title": "Red Paper-cut",
+  "category": "East Asian Traditions",
+  "line": "On New Year's Eve the beast Nian comes to town, and one girl's giant paper-cut lights up the village to scare it off.",
+  "uses": "Lunar New Year, Festive greetings, Folk tales"
+ },
+ {
+  "slug": "shadow-puppet",
+  "title": "Shadow Puppetry",
+  "category": "East Asian Traditions",
+  "line": "Ten suns scorch the earth until the archer Hou Yi draws his bow, told with leather puppets on a lit screen.",
+  "uses": "Myths & folklore, Heritage, Festivals"
+ },
+ {
+  "slug": "ukiyoe",
+  "title": "Ukiyo-e",
+  "category": "East Asian Traditions",
+  "line": "A traveller walks toward a distant mountain; every shot is a woodblock print, ending in a great wave.",
+  "uses": "Travel, Japanese culture, Poetry"
+ },
+ {
+  "slug": "game-show",
+  "title": "Game Show Flat",
+  "category": "Games",
+  "line": "The history of AI as a rhythm game: models take the stage on the beat, and a report card closes the show.",
+  "uses": "Tech timelines, Year in review, Variety shows"
+ },
+ {
+  "slug": "hd-2d",
+  "title": "HD-2D",
+  "category": "Games",
+  "line": "The lighthouse goes dark; a girl carries the last flame through a night forest and up the storm cliffs.",
+  "uses": "Game trailers, Fantasy, Story films"
+ },
+ {
+  "slug": "microgame",
+  "title": "Microgame Frenzy",
+  "category": "Games",
+  "line": "A clumsy cadet survives a five-second boot camp, faster and faster, until the boss: landing home.",
+  "uses": "Game trailers, Onboarding, Social shorts"
+ },
+ {
+  "slug": "pixel-rpg",
+  "title": "16-bit Pixel RPG",
+  "category": "Games",
+  "line": "At the final boss door a hero saves the game, and the save screen replays the whole journey.",
+  "uses": "Game trailers, Recaps, Nostalgia"
+ },
+ {
+  "slug": "art-deco",
+  "title": "Art Deco",
+  "category": "Graphic & Type",
+  "line": "A grand hotel, 1930: a bellboy races lifts and revolving doors to deliver one letter before midnight.",
+  "uses": "Luxury & hospitality, Galas, Invitations"
+ },
+ {
+  "slug": "ascii-crt",
+  "title": "ASCII / CRT Terminal",
+  "category": "Graphic & Type",
+  "line": "A moon-base AI wakes after forty years to a signal from Earth, and replies by drawing “home” in characters.",
+  "uses": "Developer tools, Sci-fi, Tech brands"
+ },
+ {
+  "slug": "blueprint",
+  "title": "Blueprint",
+  "category": "Graphic & Type",
+  "line": "An inventor's blueprint draws, explodes and assembles a cloud-catching machine, and its revision cloud starts to rain.",
+  "uses": "Engineering, Hardware launches, Tech explainers"
+ },
+ {
+  "slug": "pictogram-motion",
+  "title": "Pictogram Motion",
+  "category": "Graphic & Type",
+  "line": "All 43 sports of the 2026 Asian Games as beat-locked geometric pictograms.",
+  "uses": "Sports events, Visual identity, Event openers"
+ },
+ {
+  "slug": "spy-titles",
+  "title": "60s Spy Title Sequence",
+  "category": "Graphic & Type",
+  "line": "Opening titles for an imaginary 1964 spy film: a chase for a stolen key until the shapes lock into the title.",
+  "uses": "Title sequences, Event openers, Trailers"
+ },
+ {
+  "slug": "stained-glass",
+  "title": "Stained Glass",
+  "category": "Graphic & Type",
+  "line": "Sunlight crosses a cathedral window from dawn to dusk, waking each pane of a knight-and-dragon tale.",
+  "uses": "Legends, Heritage, Holiday stories"
+ },
+ {
+  "slug": "swiss-motion",
+  "title": "Swiss Motion Graphics",
+  "category": "Graphic & Type",
+  "line": "A concert poster lays itself out by five Swiss design rules; the fifth is to break just one.",
+  "uses": "Brand identity, Events, Design education"
+ },
+ {
+  "slug": "crayon-book",
+  "title": "Crayon Picture Book",
+  "category": "Hand-drawn & Painting",
+  "line": "The moon can't sleep, so a little girl climbs onto the roof to sing it a lullaby.",
+  "uses": "Picture books, Bedtime stories, Kids' learning"
+ },
+ {
+  "slug": "impasto",
+  "title": "Impasto Oil Painting",
+  "category": "Hand-drawn & Painting",
+  "line": "In a grey, rainy square one red umbrella opens, and a waltz paints the whole plaza in colour.",
+  "uses": "Music videos, Art & culture, Emotional ads"
+ },
+ {
+  "slug": "ink-wash",
+  "title": "Chinese Ink Wash",
+  "category": "Hand-drawn & Painting",
+  "line": "A swordsman crosses the river on the water and splits the current with a single stroke.",
+  "uses": "Wuxia, Cultural brands, Poetry"
+ },
+ {
+  "slug": "one-line",
+  "title": "One-line Drawing",
+  "category": "Hand-drawn & Painting",
+  "line": "One unbroken line draws a whole life, then the pen passes to a child.",
+  "uses": "Brand stories, Life milestones, Minimal ads"
+ },
+ {
+  "slug": "urban-sketch",
+  "title": "Urban Sketch · Pen & Wash",
+  "category": "Hand-drawn & Painting",
+  "line": "A park that is only a pen sketch; wherever the wind carries her straw hat, colour follows.",
+  "uses": "City & travel, Architecture, Lifestyle brands"
+ },
+ {
+  "slug": "watercolor",
+  "title": "Watercolor Brush",
+  "category": "Hand-drawn & Painting",
+  "line": "Follow the rain from Australia's red desert heart to its green coast in one unbroken painted walk.",
+  "uses": "Nature documentary, Travel, Science explainers"
+ },
+ {
+  "slug": "whiteboard",
+  "title": "Whiteboard Explainer",
+  "category": "Hand-drawn & Painting",
+  "line": "How your phone knows where you are: GPS, atomic clocks, and the 38 microseconds relativity adds every day.",
+  "uses": "Explainers, Online courses, Science"
+ },
+ {
+  "slug": "dark-keynote",
+  "title": "Dark Tech Keynote",
+  "category": "Information & Keynote",
+  "line": "Launch film for Tidy, a fictional app: one buried cursor snaps hundreds of windows back into place.",
+  "uses": "Product launches, SaaS, Keynotes"
+ },
+ {
+  "slug": "dataviz",
+  "title": "Data Storytelling",
+  "category": "Information & Keynote",
+  "line": "A hundred years of summer temperatures, where the chart itself tells the story.",
+  "uses": "Data journalism, Reports, Climate & science"
+ },
+ {
+  "slug": "hologram-hud",
+  "title": "Sci-fi Hologram HUD",
+  "category": "Information & Keynote",
+  "line": "An e-bike is scanned into a hologram; target boxes lock onto the battery, motor and brakes, and each spec rolls into place.",
+  "uses": "Product spec walkthroughs, Launch & crowdfunding videos, Trade-show screens"
+ },
+ {
+  "slug": "iso-infographic",
+  "title": "Isometric Infographic",
+  "category": "Information & Keynote",
+  "line": "A coffee's journey from the plantation to your hands, across one isometric world.",
+  "uses": "Process explainers, Supply chains, Annual reports"
+ },
+ {
+  "slug": "living-screencast",
+  "title": "Living Screencast",
+  "category": "Information & Keynote",
+  "line": "Clawd, the Claude Code pixel mascot, hops out of the terminal into the Claude app and acts out plan mode, diff comments and self-checks in a one-take screencast.",
+  "uses": "Product tutorials, Feature launches, Onboarding"
+ },
+ {
+  "slug": "brick-toy",
+  "title": "Brick Toy",
+  "category": "Materials & 3D",
+  "line": "A brick astronaut builds a rocket from spare parts and flies to a brick moon.",
+  "uses": "Toys & kids, Product builds, Space"
+ },
+ {
+  "slug": "glass-product",
+  "title": "Glass Product Render",
+  "category": "Materials & 3D",
+  "line": "Unboxing and close-ups of Aura, fictional glass earbuds, in strip-light sweeps and caustics.",
+  "uses": "Product launches, Consumer tech, Beauty"
+ },
+ {
+  "slug": "lowpoly-island",
+  "title": "Low-poly Isometric Island",
+  "category": "Materials & 3D",
+  "line": "An island and its village grow tile by tile from an empty sea, each tile a note, into a starry night.",
+  "uses": "Game trailers, World building, Calm content"
+ },
+ {
+  "slug": "paper-popup",
+  "title": "Paper Pop-up Book",
+  "category": "Materials & 3D",
+  "line": "A pop-up book opens on a desk; a sprite named Pip adventures through paper worlds and jumps out into ours.",
+  "uses": "Children's books, Game trailers, Story films"
+ },
+ {
+  "slug": "tilt-shift",
+  "title": "Tilt-Shift Miniature",
+  "category": "Materials & 3D",
+  "line": "Morning rush hour in a town that looks like a model: traffic, trains and tiny people.",
+  "uses": "City promos, Real estate, Transport"
+ },
+ {
+  "slug": "engraving",
+  "title": "Copperplate Engraving",
+  "category": "Print & Printmaking",
+  "line": "A natural-history plate engraves itself: the burin cuts the copper, the bee builds up line by line, and a watercolour wash brings it to life.",
+  "uses": "Museum labels, Science explainers, Brand heritage"
+ },
+ {
+  "slug": "halftone-dossier",
+  "title": "Halftone Dossier",
+  "category": "Print & Printmaking",
+  "line": "A chubby orange cat stands trial for testing gravity and 4 a.m. parkour, and walks free.",
+  "uses": "Humour, Pet content, Social shorts"
+ },
+ {
+  "slug": "risograph",
+  "title": "Risograph Print",
+  "category": "Print & Printmaking",
+  "line": "A Sunday-morning bike ride through the city — bakery, park, riverside — in two misregistered inks.",
+  "uses": "Indie brands, Zines, Lifestyle"
+ },
+ {
+  "slug": "silkscreen-poster",
+  "title": "Silkscreen Travel Poster",
+  "category": "Print & Printmaking",
+  "line": "Three trail posters are screen-printed one ink at a time, then climbed in one long take from noon to dusk.",
+  "uses": "Trail & destination guides, Tourism promos, Event posters"
+ },
+ {
+  "slug": "woodcut",
+  "title": "Woodcut Print",
+  "category": "Print & Printmaking",
+  "line": "A village spends a whole winter casting one bell; the first time it rings, the snow stops.",
+  "uses": "Folk tales, Craft brands, Book trailers"
+ }
+]

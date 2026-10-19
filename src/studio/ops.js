@@ -363,6 +363,35 @@ Write the result to \`${rel(ws, path.join(dir, 'critique.md'))}\`.
 }
 
 /**
+ * Extracts a video into a frame sequence for frame-accurate use (web: frames() in media.js),
+ * optionally chroma-keyed to transparent PNGs.
+ * @param {string} ws
+ * @param {string} source workspace-relative video
+ * @param {{ fps?: number, key?: string, width?: number, name?: string }} [o]
+ * @returns {Promise<Result>}
+ */
+export async function extractFrames(ws, source, o = {}) {
+  const { ff } = await import('../media/ffmpeg.js');
+  const input = inside(ws, source);
+  const name = o.name || path.basename(source).replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '-');
+  const dir = path.join(ws, 'assets', 'frames', name);
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+  const fps = o.fps || (await loadManifest(ws)).fps;
+  const colour = o.key === 'green' ? '0x00FF00' : o.key === 'blue' ? '0x0000FF' : o.key?.replace('#', '0x');
+  const vf = [`fps=${fps}`];
+  if (o.width) vf.push(`scale=${o.width}:-2`);
+  if (colour) vf.push(`chromakey=${colour}:0.16:0.08`, `despill=type=${o.key === 'blue' ? 'blue' : 'green'}`, 'format=rgba');
+  const ext = colour ? 'png' : 'jpg';
+  await ff(['-i', input, '-vf', vf.join(','), ...(ext === 'jpg' ? ['-q:v', '3'] : []), path.join(dir, `%05d.${ext}`)], { timeout: 900000 });
+  const files = (await readdir(dir)).filter((f) => f.endsWith(`.${ext}`));
+  const first = await probe(path.join(dir, files[0]));
+  const meta = { source, fps, count: files.length, ext, keyed: Boolean(colour), width: first.video?.width, height: first.video?.height };
+  await writeFile(path.join(dir, 'frames.json'), JSON.stringify(meta, null, 1));
+  return { text: `${rel(ws, dir)}: ${meta.count} frames at ${fps} fps (${meta.width}×${meta.height}${meta.keyed ? ', keyed' : ''})`, files: [] };
+}
+
+/**
  * Notes the person pinned in the studio, oldest first.
  * @param {string} ws
  * @returns {Promise<Array<{ id: string, time: number, text: string, frame?: string, status: string, at: string }>>}

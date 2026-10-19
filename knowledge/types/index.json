@@ -1,0 +1,182 @@
+[
+  {
+    "slug": "product-launch",
+    "title": "Product Launch Film",
+    "category": "Launch & Product",
+    "line": "Launch day: one promise, the product at its most beautiful, three proofs, the name, the call to action.",
+    "uses": "SaaS & app launches, Hardware, New products",
+    "durations": "15–60 s",
+    "aspects": "16:9 master, 9:16 cut",
+    "beats": ["Hook + promise", "Problem in one image", "Hero reveal", "Three proofs", "Name, promise, CTA"]
+  },
+  {
+    "slug": "product-walkthrough",
+    "title": "Product Walkthrough · MVP Demo",
+    "category": "Launch & Product",
+    "line": "A guided tour of the real product doing real work, step by step, to the aha moment.",
+    "uses": "MVP demos, Investor updates, Landing pages",
+    "durations": "30–90 s",
+    "aspects": "16:9",
+    "beats": ["The job to be done", "Enter the product", "Step 1", "Step 2", "The aha result", "Name + CTA"]
+  },
+  {
+    "slug": "app-promo",
+    "title": "App Promo",
+    "category": "Launch & Product",
+    "line": "A mobile app on a phone, fast, tactile and joyful, one feature per beat, ending on the download.",
+    "uses": "App stores, Paid social, Launch posts",
+    "durations": "15–30 s",
+    "aspects": "9:16 master, 16:9",
+    "beats": ["Best moment on screen", "Everyday problem", "App opens", "Features", "Download CTA"]
+  },
+  {
+    "slug": "feature-release",
+    "title": "Feature Release",
+    "category": "Launch & Product",
+    "line": "What's new: one feature shown so clearly that existing users try it today.",
+    "uses": "Changelogs, Release notes, Product updates",
+    "durations": "10–45 s",
+    "aspects": "16:9, 1:1, 9:16",
+    "beats": ["The old friction", "Introducing the feature", "Demo in two moves", "The detail users love", "Availability + CTA"]
+  },
+  {
+    "slug": "teaser",
+    "title": "Teaser & Countdown",
+    "category": "Launch & Product",
+    "line": "Reveal almost nothing, build anticipation, give a date.",
+    "uses": "Pre-launch, Waitlists, Event invitations",
+    "durations": "6–30 s",
+    "aspects": "9:16, 1:1, 16:9",
+    "beats": ["Darkness and a sound", "Fragments", "Near-reveal", "The date", "Brand + waitlist"]
+  },
+  {
+    "slug": "social-ad",
+    "title": "Performance Social Ad",
+    "category": "Advertising",
+    "line": "Stops the scroll in one second, shows the product by two, ends on a clear call to action, works on mute.",
+    "uses": "TikTok, Reels, Shorts, Meta ads",
+    "durations": "6–30 s",
+    "aspects": "9:16 master",
+    "beats": ["Hook", "Problem or desire", "Product in action", "Proof", "Offer + CTA"]
+  },
+  {
+    "slug": "commercial",
+    "title": "Brand Commercial",
+    "category": "Advertising",
+    "line": "A broadcast-quality spot: one creative idea, told with cinema craft, that leaves a feeling and the brand.",
+    "uses": "TV & streaming, Pre-roll, Brand campaigns",
+    "durations": "15–60 s",
+    "aspects": "16:9 master, cutdowns",
+    "beats": ["Arresting image", "Build", "Twist or peak", "Product in the story", "Brand line + logo"]
+  },
+  {
+    "slug": "ecommerce-ad",
+    "title": "E-commerce Product Ad",
+    "category": "Advertising",
+    "line": "The product lit like a magazine cover, its details irresistible, the offer clear, the shop link last.",
+    "uses": "DTC brands, Product pages, Shopping ads",
+    "durations": "6–30 s",
+    "aspects": "9:16, 1:1, 16:9",
+    "beats": ["Hero reveal", "Materials and details", "In use", "Variants", "Offer + shop CTA"]
+  },
+  {
+    "slug": "brand-manifesto",
+    "title": "Brand Manifesto",
+    "category": "Brand & Story",
+    "line": "What a company believes and why it exists: words as rhythm, images as conviction.",
+    "uses": "About pages, Keynote openers, Rebrands",
+    "durations": "30–90 s",
+    "aspects": "16:9",
+    "beats": ["A provocative truth", "What we refuse", "What we believe", "The invitation", "Brand + line"]
+  },
+  {
+    "slug": "customer-story",
+    "title": "Customer Story",
+    "category": "Brand & Story",
+    "line": "A real customer's problem, what changed and the result in numbers, in their own words.",
+    "uses": "Case studies, Sales pages, Testimonials",
+    "durations": "30–60 s",
+    "aspects": "16:9, 9:16",
+    "beats": ["Who they are", "The challenge", "What they did", "The result in numbers", "Quote + CTA"]
+  },
+  {
+    "slug": "logo-reveal",
+    "title": "Logo Reveal & Sting",
+    "category": "Brand & Story",
+    "line": "Three to ten seconds that give a logo its signature motion.",
+    "uses": "Intros & outros, Channel idents, Event openers",
+    "durations": "3–10 s",
+    "aspects": "16:9, 1:1",
+    "beats": ["Anticipation", "Build or transformation", "Logo locks", "Tagline hold"]
+  },
+  {
+    "slug": "explainer",
+    "title": "Animated Explainer",
+    "category": "Explain & Teach",
+    "line": "Make a product or idea click: the problem, how it works in three steps, why it matters.",
+    "uses": "Websites, Onboarding, YouTube",
+    "durations": "30–90 s",
+    "aspects": "16:9",
+    "beats": ["The problem", "Meet the solution", "How it works in 3 steps", "The payoff", "CTA"]
+  },
+  {
+    "slug": "tutorial",
+    "title": "Tutorial & Onboarding",
+    "category": "Explain & Teach",
+    "line": "From zero to the first success: numbered steps, exact clicks, nothing to rewind.",
+    "uses": "Help centres, In-app onboarding, Setup guides",
+    "durations": "30–60 s",
+    "aspects": "16:9, 9:16 for mobile",
+    "beats": ["What you'll do", "Step by step", "Check it worked", "What's next"]
+  },
+  {
+    "slug": "course-trailer",
+    "title": "Course Trailer",
+    "category": "Explain & Teach",
+    "line": "Sell a course or workshop: the transformation, the curriculum as a path, the instructor, the start date.",
+    "uses": "Online courses, Bootcamps, Webinars",
+    "durations": "30–60 s",
+    "aspects": "16:9, 9:16",
+    "beats": ["The outcome", "What you'll learn", "The instructor", "Format and dates", "Enrol CTA"]
+  },
+  {
+    "slug": "investor-pitch",
+    "title": "Investor Pitch Teaser",
+    "category": "Business & Events",
+    "line": "The first ten minutes of a pitch in sixty seconds: problem, product, market, traction, team, the ask.",
+    "uses": "Fundraising, Demo days, Data rooms",
+    "durations": "60–90 s",
+    "aspects": "16:9",
+    "beats": ["Problem", "Solution", "Market", "Traction", "Team", "The ask"]
+  },
+  {
+    "slug": "hiring",
+    "title": "Hiring & Employer Brand",
+    "category": "Business & Events",
+    "line": "Make great people want to join: the mission, the work, how the team works, the open roles.",
+    "uses": "Careers pages, Recruiting, LinkedIn",
+    "durations": "30–60 s",
+    "aspects": "16:9, 9:16, 1:1",
+    "beats": ["The mission", "The work", "How we work", "Open roles", "Join us"]
+  },
+  {
+    "slug": "event-promo",
+    "title": "Event Promo",
+    "category": "Business & Events",
+    "line": "Make a conference, summit or hackathon unmissable: name, dates, speakers, place, tickets.",
+    "uses": "Conferences, Hackathons, Festivals, Meetups",
+    "durations": "15–60 s",
+    "aspects": "16:9, 9:16, 1:1",
+    "beats": ["Hook", "Name, dates, city", "Speakers", "Programme", "Venue + tickets"]
+  },
+  {
+    "slug": "year-in-review",
+    "title": "Year in Review",
+    "category": "Business & Events",
+    "line": "A year or a report turned into a celebration: the big numbers, the milestones, what's next.",
+    "uses": "Annual reports, Wrapped-style recaps, All-hands",
+    "durations": "30–60 s",
+    "aspects": "9:16 cards, 16:9",
+    "beats": ["Title", "Milestones", "Big numbers", "Thank you", "What's next"]
+  }
+]
