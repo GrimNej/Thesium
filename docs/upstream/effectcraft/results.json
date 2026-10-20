@@ -1,0 +1,49 @@
+{
+ "effectcraft": "effectcraft-cli 0.11.1",
+ "platform": "win32 10.0.19045",
+ "date": "2026-10-20",
+ "results": [
+  {
+   "id": "1",
+   "title": "Variable font: style \"Black\" and \"Light\" render identically",
+   "reproduced": false,
+   "detail": "mean luma Black 32.39, Light 29.23, difference 5.843 (fonts/Unbounded.ttf is a variable font, wght 200–900)"
+  },
+  {
+   "id": "2b",
+   "title": "A missing font family renders in Inter with no error",
+   "reproduced": true,
+   "detail": "\"No Such Family\" against \"Inter\": difference 0.000; the script and the render succeed without a warning"
+  },
+  {
+   "id": "2a",
+   "title": "A PostScript name (Unbounded-Black) falls back to Inter",
+   "reproduced": false,
+   "detail": "\"Unbounded-Black\" against \"Inter\": difference 18.928"
+  },
+  {
+   "id": "3",
+   "title": "CC Particle World renders nothing with its defaults",
+   "reproduced": false,
+   "detail": "mean luma at 1, 2, 3 s: 17.68, 17.55, 17.57 (a black solid source)"
+  },
+  {
+   "id": "4",
+   "title": "CC Star Burst renders nothing with its defaults",
+   "reproduced": false,
+   "detail": "mean luma at 1, 2, 3 s: 103.56, 101.88, 102.67 (a white solid source)"
+  },
+  {
+   "id": "5",
+   "title": "CC Light Rays: no rays (invisible or blown out)",
+   "reproduced": false,
+   "detail": "mean luma without 26.74, with CC Light Rays 41.13 (a white 120 px dot on black)"
+  },
+  {
+   "id": "6",
+   "title": "Echo on a shape layer leaves no trail",
+   "reproduced": true,
+   "detail": "difference with/without Echo: shape layer 0.000, same box precomposed 10.037"
+  }
+ ]
+}

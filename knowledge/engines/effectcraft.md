@@ -30,7 +30,7 @@ T.glow(title, { threshold: 60, radius: 60, intensity: 0.9 });
 - Files: only from the film folder: `T.image("assets/photo.jpg")`, `T.footage(...)`, `T.asset(...)`.
 - Fonts: family + style from `thesium fonts` (bundled: Inter, Manrope, Space Grotesk, Unbounded,
   Bebas Neue, Fraunces, Instrument Serif, JetBrains Mono; brand fonts in `assets/fonts/`).
-  Never PostScript names: EffectCraft falls back to Inter silently.
+  A family EffectCraft does not have renders in Inter without a word; Thesium's build catches it.
 - Effects and their exact parameter ids: `thesium effects <name>`. Point parameters are in
   **comp pixels** even though the listed defaults look like fractions.
 
@@ -117,13 +117,19 @@ lights: `transform/poi`, `cameraOptions/zoom|dof|focusDistance|aperture`,
 - **Camera and light paths** are `transform/poi`, `cameraOptions/*`, `lightOptions/*` (not
   `pointOfInterest`).
 
-## Avoid on 0.11.1
+## Known limits on 0.11.1
 
-These rendered nothing useful in testing; use the recipes above instead: `CC Particle World`
-(nothing visible, even pre-rolled), `CC Light Rays` (blown out or invisible), `CC Star Burst`
-(invisible), `Echo` directly on a shape layer (no trail), a Brightest `CC Radial Fast Blur`
-duplicate as god rays (hard blocky streaks). Variable fonts draw at their default weight: Thesium
-gives EffectCraft fixed-weight instances, so always name the `style`.
+Re-verified with minimal scripts (`docs/upstream/effectcraft/`):
+
+- `Echo` directly on a shape layer leaves no trail; precompose the shape and put Echo on the
+  precomp layer.
+- A variable font does not take its weight from the style: Thesium gives EffectCraft fixed-weight
+  instances, so always name the `style`.
+- A Brightest `CC Radial Fast Blur` duplicate used as god rays looks blocky; the glint and glow
+  recipes above read better.
+
+`CC Particle World`, `CC Star Burst` and `CC Light Rays` work with their defaults (an earlier
+version of this guide listed them as broken; that did not hold up in isolation).
 
 ## Performance
 

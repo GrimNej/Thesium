@@ -10,6 +10,7 @@ import { run } from '../core/proc.js';
 import { FONT_DIR, inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
 import { scan } from './rules.js';
+import { ensureSpace, frameBytes } from '../core/disk.js';
 
 const WRAPPER = '.thesium-build.jsx';
 
@@ -102,6 +103,12 @@ var THESIUM = ${JSON.stringify({ ...info, root: posix(path.resolve(workspace)), 
         var ok = false;
         for (var k = 0; k < found.length; k++)
           if (found[k].family === doc.font && (!doc.fontStyle || found[k].styles.indexOf(doc.fontStyle) >= 0)) ok = true;
+        // A PostScript name (Unbounded-Black) renders as that family's style; the font list only knows families.
+        var ps = /^(.+)-([A-Za-z]+)$/.exec(doc.font);
+        if (!ok && ps) {
+          var named = app.run("text.fonts", { query: ps[1] }).families || [];
+          for (var q = 0; q < named.length; q++) if (named[q].family === ps[1] && named[q].styles.indexOf(ps[2]) >= 0) ok = true;
+        }
         families[key] = ok;
         if (!ok) report.missingFonts.push({ comp: item.name, layer: layer.name, font: doc.font, style: doc.fontStyle });
       }
@@ -128,7 +135,6 @@ const RULES = [
   { pattern: /\bSocket\s*\(|system\.callSystem|\.execute\s*\(/, level: 'error', message: 'Builds must not use the network or run programs' },
   { pattern: /setTimeout|app\.scheduleTask/, level: 'error', message: 'Scheduled tasks do not run in headless builds' },
   { pattern: /"[A-Za-z]:[\\/]|'[A-Za-z]:[\\/]/, level: 'warning', message: 'Absolute paths break when the film folder moves; use T.asset("assets/…")' },
-  { pattern: /\.font\s*=\s*["'][^"']+-[A-Z][a-z]/, level: 'warning', message: 'PostScript font names fall back silently in EffectCraft; use T.text({ font: "Family", style: "Bold" })' },
 ];
 
 /** @type {import('./index.js').Engine & { cli: () => Promise<string> }} */
@@ -228,6 +234,7 @@ export const effectcraftEngine = {
         await mkdir(dir, { recursive: true });
         const resolution = scale < 1 ? String(scale) : 'full';
         const total = Math.round((to - from) * fps);
+        await ensureSpace(dir, total * frameBytes('png', m.width * scale, m.height * scale), 'The EffectCraft sequence');
         // Progress by counting written frames: works on every EffectCraft release.
         const timer = setInterval(async () => {
           const count = (await readdir(dir).catch(() => [])).length;
