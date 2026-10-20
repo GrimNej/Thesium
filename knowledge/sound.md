@@ -90,8 +90,10 @@ that reads well on mute should stay on mute.
   `{textFile}`; also `{voice}`, `{speed}`, `{lang}`). Quote paths in templates.
 - Kokoro voices (`thesium sound voices`): `af_heart`, `af_bella`, `af_nicole`, `am_michael`,
   `am_fenrir`, `am_puck` (American); `bf_emma`, `bf_isabella`, `bm_george`, `bm_fable` (British);
-  and Spanish, French, Hindi, Italian, Japanese, Portuguese and Mandarin voices. English voices are
-  the strongest; check other languages with the hearing check.
+  `ef_dora` (Spanish), `ff_siwis` (French), `if_sara` (Italian), `pf_dora` (Brazilian Portuguese).
+  Measured with the hearing check, these come back at 92–100% of words. Kokoro's Hindi (64%),
+  Japanese (18%) and Mandarin (33%) voices are not usable through kokoro-onnx: use
+  `"provider": "system"` or a `"command"` with a native voice for those languages.
 - Every line is cached by what shapes it, so changing one line re-speaks only that line.
 
 What `sound voice` gives back, and what to do with it:

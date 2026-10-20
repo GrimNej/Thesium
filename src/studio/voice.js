@@ -360,6 +360,13 @@ export async function voice(ws, args, o = {}) {
   await writeFile(timelineFile, JSON.stringify({ duration: d, lines: timeline }, null, 1));
 
   const warnings = [];
+  // Measured with the hearing check: kokoro-onnx's phonemiser spells Japanese and Mandarin out as
+  // language names (18% and 33% of characters heard), and Hindi comes out partly wrong (64%).
+  if (provider === 'kokoro') {
+    const weak = new Set(takes.filter((t) => !t.recorded && /^[jzh]/.test(t.voice)).map((t) => t.voice));
+    if (weak.size)
+      warnings.push(`Kokoro speaks ${[...weak].join(', ')} poorly through kokoro-onnx (Japanese and Mandarin barely, Hindi in part); use "provider": "system" or "command" with a native voice for these languages`);
+  }
   for (let i = 0; i < timeline.length; i++) {
     const l = timeline[i];
     const next = timeline[i + 1];
