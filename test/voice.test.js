@@ -41,7 +41,8 @@ test('speech spans come from silences, and the duck eases around them', async ()
     await ff([
       '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1',
       '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1',
-      '-filter_complex', '[0]adelay=delays=500:all=1[a];[1]adelay=delays=3000:all=1[b];[a][b]amix=inputs=2:normalize=0,apad=whole_dur=5,atrim=0:5',
+      '-filter_complex', '[0]adelay=delays=500:all=1[a];[1]adelay=delays=3000:all=1[b];[a][b]amix=inputs=2:normalize=0,apad',
+      '-t', '5',
       file,
     ]);
     const spans = await speechSpans(file, 5);

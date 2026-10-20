@@ -349,10 +349,11 @@ export async function voice(ws, args, o = {}) {
     (t, i) => `[${i}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=${t.line.gain ?? 0}dB,adelay=delays=${Math.round(t.line.t * 1000)}:all=1[v${i}]`,
   );
   const mix = takes.length > 1 ? `${takes.map((_, i) => `[v${i}]`).join('')}amix=inputs=${takes.length}:normalize=0:duration=longest[m]` : '[v0]anull[m]';
-  await ff([...takes.flatMap((t) => ['-i', t.file]), '-filter_complex', `${chains.join(';')};${mix};[m]apad=whole_dur=${d},atrim=0:${d}[o]`, '-map', '[o]', '-ar', '48000', raw]);
+  // Pad without limit and cut with -t: apad's whole_dur reads differently across FFmpeg releases.
+  await ff([...takes.flatMap((t) => ['-i', t.file]), '-filter_complex', `${chains.join(';')};${mix};[m]apad[o]`, '-map', '[o]', '-t', String(d), '-ar', '48000', raw]);
   const level = (await loudness(raw)).integratedLufs;
   const gain = level !== undefined && Number.isFinite(level) ? VOICE_LUFS - level : 0;
-  await ff(['-i', raw, '-af', `volume=${gain.toFixed(2)}dB`, '-ar', '48000', out]);
+  await ff(['-i', raw, '-af', `volume=${gain.toFixed(2)}dB`, '-t', String(d), '-ar', '48000', out]);
   await rm(raw, { force: true });
 
   const timeline = takes.map((t) => ({ t: t.line.t, end: Number((t.line.t + (t.seconds || 0)).toFixed(3)), text: t.line.text, file: rel(ws, t.file) }));
