@@ -9,6 +9,7 @@ import { run } from '../core/proc.js';
 import { inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
 import { scan } from './rules.js';
+import { ensureSpace, frameBytes } from '../core/disk.js';
 
 const RULES = [
   { pattern: /Math\.random\s*\(/, level: 'error', message: "Math.random() makes frames unrepeatable; use random(seed) from 'remotion'" },
@@ -71,8 +72,12 @@ const PACKAGE = (m) =>
 const ROOT_TSX = (m) => `import { Composition, getInputProps, registerRoot } from 'remotion';
 import { Film } from './Film';
 
-// Thesium passes the film's facts and tuned parameters as input props (THESIUM).
-const thesium = (getInputProps() as { THESIUM?: Record<string, unknown> }).THESIUM ?? {};
+// Thesium passes the film's facts and tuned parameters as input props (THESIUM). For motion blur it
+// can ask for more frames per second than the film has (thesium.renderFps): Film derives time from
+// useVideoConfig().fps, so the extra frames are exact sub-frame times.
+type Thesium = { renderFps?: number; [key: string]: unknown };
+const thesium = (getInputProps() as { THESIUM?: Thesium }).THESIUM ?? {};
+const fps = thesium.renderFps ?? ${m.fps};
 
 const Root = () => (
   <Composition
@@ -80,8 +85,8 @@ const Root = () => (
     component={Film}
     width={${m.width}}
     height={${m.height}}
-    fps={${m.fps}}
-    durationInFrames={${Math.round(m.duration * m.fps)}}
+    fps={fps}
+    durationInFrames={Math.round(${m.duration} * fps)}
     defaultProps={{ thesium }}
   />
 );
@@ -148,7 +153,8 @@ export const remotionEngine = {
       }
     };
     await walk(path.join(dir, 'src'));
-    if (m.motionBlur.samples > 1) findings.push({ level: 'warning', message: 'Remotion renders whole frames; use <CameraMotionBlur> from @remotion/motion-blur instead of motionBlur.samples' });
+    if (m.motionBlur.samples > 1 && !(await readFile(path.join(dir, 'src', 'index.tsx'), 'utf8').catch(() => '')).includes('renderFps'))
+      findings.push({ level: 'warning', message: 'motionBlur.samples needs src/index.tsx to take its fps from thesium.renderFps (see the Remotion guide); otherwise masters fall back to one still per sample' });
     return findings;
   },
 
@@ -156,16 +162,36 @@ export const remotionEngine = {
     const dir = inside(workspace, m.entry);
     const bin = remotionBin(dir);
     if (!bin) throw new Error(`Remotion is not installed in ${m.entry}. Run: npm install (in ${m.entry})`);
-    const props = path.join(workspace, '.thesium', `remotion-props-${process.pid}-${sessions++}.json`);
-    await mkdir(path.dirname(props), { recursive: true });
-    await writeFile(props, JSON.stringify({ THESIUM: filmInfo(m, o.params) }));
+    const base = path.join(workspace, '.thesium', `remotion-props-${process.pid}-${sessions++}`);
+    await mkdir(path.dirname(base), { recursive: true });
+    const info = filmInfo(m, o.params);
+    // Sub-frame times (motion blur) need a project whose Root reads thesium.renderFps.
+    const sampled = (await readFile(path.join(dir, 'src', 'index.tsx'), 'utf8').catch(() => '')).includes('renderFps');
+    /** @type {Map<number, string>} */
+    const propsFiles = new Map();
+    const propsAt = async (rate) => {
+      if (!propsFiles.has(rate)) {
+        const file = `${base}-${rate}.json`;
+        await writeFile(file, JSON.stringify({ THESIUM: rate === m.fps ? info : { ...info, renderFps: rate } }));
+        propsFiles.set(rate, file);
+      }
+      return /** @type {string} */ (propsFiles.get(rate));
+    };
     const scale = o.scale && o.scale > 0 ? o.scale : 1;
+    const gl = m.engineOptions?.remotion?.gl ? [`--gl=${m.engineOptions.remotion.gl}`] : [];
     const served = await bundle(workspace, dir, bin, o.signal);
-    const common = [`--props=${props}`, `--scale=${scale}`, '--log=error'];
+    const common = async (rate) => [`--props=${await propsAt(rate)}`, `--scale=${scale}`, '--log=error', ...gl];
     const rm_ = (p) => rm(p, { recursive: true, force: true });
-    const frameOf = (t) => Math.min(Math.round(m.duration * m.fps) - 1, Math.max(0, Math.round(t * m.fps)));
+    /** The lowest rate (film fps × 1, 2, 4 … 64) that has a frame exactly at t. */
+    const rateFor = (t) => {
+      if (!sampled) return m.fps;
+      for (const k of [1, 2, 4, 8, 16, 32, 64]) if (Math.abs(t * m.fps * k - Math.round(t * m.fps * k)) < 1e-4) return m.fps * k;
+      return m.fps;
+    };
     const still = async (t, out) => {
-      await run(bin, ['still', served, 'Film', out, `--frame=${frameOf(t)}`, '--image-format=png', ...common], { cwd: dir, timeout: 600000, signal: o.signal, shell: SHELL });
+      const rate = rateFor(t);
+      const frame = Math.min(Math.round(m.duration * rate) - 1, Math.max(0, Math.round(t * rate)));
+      await run(bin, ['still', served, 'Film', out, `--frame=${frame}`, '--image-format=png', ...(await common(rate))], { cwd: dir, timeout: 600000, signal: o.signal, shell: SHELL });
     };
     let n = 0;
     return {
@@ -179,11 +205,13 @@ export const remotionEngine = {
         return data;
       },
       async sequence({ from, to, fps, dir: target, onProgress }) {
-        if (Math.abs(fps - m.fps) > 1e-6) throw Object.assign(new Error('Remotion renders whole frames only'), { partial: true });
+        if (Math.abs(fps - m.fps) > 1e-6 && !sampled) throw Object.assign(new Error('This Root renders whole frames only'), { partial: true });
         await rm_(target);
-        const a = Math.round(from * m.fps);
-        const b = Math.round(to * m.fps) - 1;
-        await run(bin, ['render', served, 'Film', target, '--sequence', '--image-format=png', `--frames=${a}-${b}`, ...common], {
+        const a = Math.round(from * fps);
+        const b = Math.round(to * fps) - 1;
+        // JPEG at quality 95, not PNG: motion-blur sequences run to thousands of frames.
+        await ensureSpace(target, (b - a + 1) * frameBytes('jpeg', m.width * scale, m.height * scale), 'The Remotion sequence');
+        await run(bin, ['render', served, 'Film', target, '--sequence', '--image-format=jpeg', '--jpeg-quality=95', `--frames=${a}-${b}`, ...(await common(fps))], {
           cwd: dir,
           timeout: 6 * 3600000,
           signal: o.signal,
@@ -193,12 +221,12 @@ export const remotionEngine = {
             if (mm) onProgress?.(Number(mm[1]), Number(mm[2]));
           },
         });
-        const files = (await readdir(target)).filter((f) => /\.png$/i.test(f)).sort();
-        for (let i = 0; i < files.length; i++) await rename(path.join(target, files[i]), path.join(target, `f_${String(i).padStart(6, '0')}.png`));
-        return { pattern: path.join(target, 'f_%06d.png'), format: 'png' };
+        const files = (await readdir(target)).filter((f) => /\.jpe?g$/i.test(f)).sort();
+        for (let i = 0; i < files.length; i++) await rename(path.join(target, files[i]), path.join(target, `f_${String(i).padStart(6, '0')}.jpg`));
+        return { pattern: path.join(target, 'f_%06d.jpg'), format: 'jpeg' };
       },
       async close() {
-        await rm_(props);
+        for (const file of propsFiles.values()) await rm_(file);
       },
     };
   },

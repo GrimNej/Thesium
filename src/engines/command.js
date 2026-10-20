@@ -16,6 +16,7 @@ import { mkdir, readFile, readdir, rm, writeFile, rename } from 'node:fs/promise
 import path from 'node:path';
 import { run } from '../core/proc.js';
 import { filmInfo } from '../core/manifest.js';
+import { ensureSpace, frameBytes } from '../core/disk.js';
 
 /** @param {string} template @param {Record<string, string | number>} values */
 function fill(template, values) {
@@ -95,6 +96,7 @@ export const commandEngine = {
               await mkdir(dir, { recursive: true });
               const fromFrame = Math.round(from * fps);
               const toFrame = Math.round(to * fps) - 1;
+              await ensureSpace(dir, (toFrame - fromFrame + 1) * frameBytes('png', m.width, m.height), 'The command sequence');
               await sh(fill(c.sequence, { ...base, from, to, fps, dir, fromFrame, toFrame }), workspace, o.signal);
               const files = (await readdir(dir)).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort();
               const ext = path.extname(files[0] || '.png').toLowerCase();

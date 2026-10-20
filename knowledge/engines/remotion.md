@@ -28,8 +28,12 @@ export const Film = ({ thesium }: { thesium: { params: Record<string, unknown> }
 - Thesium passes the film's facts and tuned parameters as the `thesium` prop.
 - Media in `public/`, referenced with `staticFile()`. No remote URLs, no `Math.random` (use
   `random(seed)` from `remotion`), no timers.
-- Remotion renders whole frames: use `@remotion/motion-blur` (`<CameraMotionBlur>`) for blur and
-  keep `motionBlur.samples` at 1.
+- Always derive time as `frame / fps` with `fps` from `useVideoConfig()`, never a constant. For
+  motion blur (`motionBlur.samples` in thesium.json) Thesium renders extra sub-frames by raising
+  the composition's frame rate through `thesium.renderFps`, which the scaffolded `src/index.tsx`
+  reads; a film that derives time this way gets exact sub-frame times for free.
+- WebGL: if a canvas comes out blank, set `engineOptions.remotion.gl` in thesium.json (`"angle"`,
+  `"swangle"`); Thesium passes it to Remotion as `--gl`.
 - Fonts: copy the bundled files you use from Thesium's `fonts/` into `public/` and load them with
   `@font-face` or `@remotion/fonts`.
 

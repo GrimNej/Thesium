@@ -18,8 +18,10 @@
  * @property {(times: number[], files: string[]) => Promise<string[]>} [frames]
  *   optional batch of exact times in one call; returns the files written (format may differ from the names asked for)
  * @property {(o: { from: number, to: number, fps: number, dir: string,
- *   onProgress?: (done: number, total: number) => void }) => Promise<{ pattern: string, format: 'png' | 'jpeg' }>} [sequence]
- *   optional native render of frames from + i/fps for [from, to) into a numbered image sequence (FFmpeg pattern)
+ *   onProgress?: (done: number, total: number) => void }) => Promise<{ pattern: string, format: 'png' | 'jpeg' } | { video: string }>} [sequence]
+ *   optional native render of frames from + i/fps for [from, to): a numbered image sequence (FFmpeg pattern)
+ *   in dir, or one video file with exactly those frames
+ * @property {number} [maxSequenceFps] the highest rate `sequence` accepts (motion-blur sub-frames are capped to it)
  * @property {() => Promise<void>} close
  *
  * @typedef {object} Engine

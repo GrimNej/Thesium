@@ -27,9 +27,22 @@ thesium.json), a local `gsap.min.js`, and `thesium-params.js`. The CLI comes fro
 
 Eases are GSAP names (`expo.out`, `power3.inOut`); springs are custom eases or tweens baked from the
 kit's spring. Sections are labels on the timeline that match timeline.json. Motion blur:
-`motionBlur.samples` works on stills; full renders use HyperFrames' own frames, so prefer modest
-speeds or shorter shutters.
+`motionBlur.samples` works on stills and masters; HyperFrames renders at most 240 fps, so a 30 fps
+film gets up to 8 sub-frames per frame and averages those inside the shutter.
+
+Canvas or WebGL drawn from code (rather than tweened DOM) renders from the seek time: build the
+scene, register it in `window.__hf.buildReady` so HyperFrames waits for it, draw on the `hf-seek`
+event, and drive a paused timeline whose tween sets a clock object (its setter draws that time).
+`examples/thesium-launch-hyperframes` does exactly this with a 500-line WebGL and DOM scene.
+
+## Checks
+
+`thesium check` runs `hyperframes check` on the composition: its lint and runtime errors (a script
+that throws renders blank frames) fail the check, and its layout and contrast findings come back
+as warnings. Mark deliberate overlaps (grain, light leaks over type) with
+`data-layout-allow-occlusion`.
 
 ## Status
 
-Partial-range previews fall back to frame-by-frame snapshots; full renders use one CLI call.
+Partial-range previews fall back to frame-by-frame snapshots; full renders use one CLI call and
+come back as one near-lossless video (no image sequence on disk).

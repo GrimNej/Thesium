@@ -9,6 +9,7 @@ import { run } from '../core/proc.js';
 import { inside } from '../core/paths.js';
 import { filmInfo } from '../core/manifest.js';
 import { ensurePackage } from '../core/vendor.js';
+import { ensureSpace, frameBytes } from '../core/disk.js';
 import { scan } from './rules.js';
 
 const RULES = [
@@ -34,6 +35,38 @@ async function cli() {
 async function hf(args, o = {}) {
   const c = await cli();
   return run(c.command, [...c.prefix, ...args], { timeout: 1800000, ...o, ...(c.shell ? { shell: true } : {}) });
+}
+
+/**
+ * HyperFrames' own check, which loads the page: its lint and runtime errors (a script that throws
+ * renders blank frames) fail Thesium's check; layout and contrast findings become warnings, since
+ * the audit cannot know which overlaps are designed. Falls back to lint on versions without check.
+ * @param {string} dir
+ * @returns {Promise<import('./index.js').Finding[]>}
+ */
+async function hyperframesCheck(dir) {
+  let report;
+  try {
+    const { stdout } = await hf(['check', dir, '--json', '--samples', '5'], { timeout: 600000 }).catch((error) => ({ stdout: String(error.stdout || '') }));
+    report = JSON.parse(stdout.slice(stdout.indexOf('{')));
+  } catch {
+    try {
+      await hf(['lint', dir], { timeout: 300000 });
+      return [];
+    } catch (error) {
+      return [{ level: 'warning', message: `hyperframes lint: ${String(/** @type {Error} */ (error).message).slice(0, 600)}` }];
+    }
+  }
+  /** @type {import('./index.js').Finding[]} */
+  const findings = [];
+  for (const [part, level] of /** @type {const} */ ([['lint', 'error'], ['runtime', 'error'], ['layout', 'warning'], ['contrast', 'warning']]))
+    for (const f of report?.[part]?.findings || [])
+      if (f.severity === 'error' || (level === 'error' && f.severity === 'warning'))
+        findings.push({
+          level: f.severity === 'error' ? level : 'warning',
+          message: `hyperframes ${part}: ${f.code || ''}${f.time !== undefined ? ` at ${f.time} s` : ''}: ${f.message}${f.text ? ` ("${String(f.text).slice(0, 40)}")` : ''}`,
+        });
+  return findings;
 }
 
 /** Writes the facts and parameter values the composition reads as window.THESIUM. */
@@ -104,11 +137,7 @@ export const hyperframesEngine = {
     if (num('width') !== m.width || num('height') !== m.height) findings.push({ level: 'error', message: `Root data-width/data-height must be ${m.width}×${m.height}` });
     if (Math.abs(num('duration') - m.duration) > 1e-6) findings.push({ level: 'error', message: `Root data-duration must be ${m.duration}` });
     if (!/__timelines/.test(html)) findings.push({ level: 'error', message: "Register the paused timeline at window.__timelines['film']" });
-    try {
-      await hf(['lint', dir], { timeout: 300000 });
-    } catch (error) {
-      findings.push({ level: 'warning', message: `hyperframes lint: ${String(/** @type {Error} */ (error).message).slice(0, 600)}` });
-    }
+    findings.push(...(await hyperframesCheck(dir)));
     return findings;
   },
 
@@ -124,6 +153,7 @@ export const hyperframesEngine = {
     return {
       format: 'png',
       parallel: 1,
+      maxSequenceFps: 240, // HyperFrames renders 1–240 fps
       async frame(t) {
         const { out, shots } = await snap([t]);
         const data = await readFile(shots[0]);
@@ -144,10 +174,13 @@ export const hyperframesEngine = {
       async sequence({ from, to, fps, dir: target }) {
         if (from > 1e-6 || Math.abs(to - m.duration) > 1e-6) throw Object.assign(new Error('partial'), { partial: true });
         await rm(target, { recursive: true, force: true });
-        await hf(['render', dir, '--format', 'png-sequence', '--fps', String(fps), '-o', target, '--quality', 'delivery', '--quiet'], { signal: o.signal, timeout: 6 * 3600000 });
-        const files = (await readdir(target)).filter((f) => /\.png$/i.test(f)).sort();
-        for (let i = 0; i < files.length; i++) await rename(path.join(target, files[i]), path.join(target, `f_${String(i).padStart(6, '0')}.png`));
-        return { pattern: path.join(target, 'f_%06d.png'), format: 'png' };
+        // A near-lossless video, not PNGs: HyperFrames encodes as it captures, and 7,200 sub-frames
+        // (30 s × 8 samples) would need ~60 GB as images. Its capture still keeps JPEGs on disk.
+        await ensureSpace(os.tmpdir(), Math.round(m.duration * fps) * frameBytes('jpeg', m.width, m.height), 'HyperFrames capture');
+        await mkdir(target, { recursive: true });
+        const video = path.join(target, 'frames.mp4');
+        await hf(['render', dir, '--format', 'mp4', '--fps', String(fps), '--crf', '8', '-o', video, '--quiet'], { signal: o.signal, timeout: 6 * 3600000 });
+        return { video };
       },
       async close() {},
     };
