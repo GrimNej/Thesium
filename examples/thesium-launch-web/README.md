@@ -33,13 +33,25 @@ Both masters go through the same Thesium pipeline: the same checks, the same mas
 
 ## Comparison
 
-![Both masters at the same moment of each section](../../docs/media/parity-sheet.jpg)
+![The four masters at the same moments](../../docs/media/parity-sheet.jpg)
 
-`docs/media/parity-sheet.jpg`: both masters at the same moment of each section, EffectCraft above
-web. Watch them: [EffectCraft](../../docs/media/thesium-launch-effectcraft.mp4) ·
+The launch film's four masters at the same four moments, one row per engine: EffectCraft (written
+as an After Effects-style script), the web (this folder), and
+[HyperFrames](../thesium-launch-hyperframes/) and [Remotion](../thesium-launch-remotion/), which
+mount this film's picture code and drive its clock their own way. Watch two of them:
+[EffectCraft](../../docs/media/thesium-launch-effectcraft.mp4) ·
 [web](../../docs/media/thesium-launch-web.mp4) (720p cuts of the 1080p masters).
 
-They differ where the instruments differ: the fog's texture (Fractal Noise against an fbm shader),
+| Engine | Master (30 s, 1080p, 8 motion-blur samples) | Against the web master |
+| --- | --- | --- |
+| EffectCraft | 528 s (its own per-layer motion blur) | a different authoring of the film |
+| Web | 253 s | — |
+| HyperFrames | 765 s | 28.0 dB PSNR |
+| Remotion | 1,737 s | 33.4 dB PSNR |
+
+HyperFrames and Remotion draw the same pixels as the web film, except for the fog's fine texture:
+its shader hashes noise with `sin()`, whose low bits differ between GPU drivers. The EffectCraft
+version differs where the instruments differ: the fog's texture (Fractal Noise against an fbm shader),
 the sparks around the name (more of them catch the light on the web), and the wall at 13.5 s, which
 sits further back on the web so its outer columns show. Type, timing, layout, the slam, the liquid
 word, the studio plane and the end card match.

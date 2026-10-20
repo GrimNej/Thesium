@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="./thesium-params.js"></script>
+<script src="./gsap.min.js"></script>
+<style>
+  @font-face { font-family: 'Unbounded'; src: url('./fonts/Unbounded.ttf'); font-weight: 200 900; }
+  @font-face { font-family: 'Space Grotesk'; src: url('./fonts/SpaceGrotesk.ttf'); font-weight: 300 700; }
+  @font-face { font-family: 'JetBrains Mono'; src: url('./fonts/JetBrainsMono.ttf'); font-weight: 100 800; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #05070c; }
+  #film { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  #scene { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="film" data-composition-id="film" data-width="1920" data-height="1080" data-duration="30" data-fps="30">
+  <div id="scene"></div>
+</div>
+<script type="module">
+  // The launch film on HyperFrames: the shared scene module (scene.js), driven by HyperFrames' clock.
+  import { createScene } from './scene.js';
+
+  const info = window.THESIUM;
+  let draw = () => {};
+  let drawn;
+  const render = (t) => {
+    if (t === drawn) return; // the timeline and hf-seek may both ask for the same time
+    drawn = t;
+    draw(t);
+  };
+  // HyperFrames waits for this before the first capture: fonts, images and the shader are ready.
+  const scene = document.getElementById('scene');
+  const built = createScene(scene, info, (p) => `.${p}`).then((r) => {
+    // Sparks, vignette and grain lie over the type on purpose; tell HyperFrames' layout audit.
+    for (const layer of scene.querySelectorAll('#fx, #vignette, #grain')) layer.setAttribute('data-layout-allow-occlusion', '');
+    draw = r;
+    render(0);
+  });
+  window.__hf = window.__hf || {};
+  window.__hf.buildReady = window.__hf.buildReady || {};
+  window.__hf.buildReady.scene = built;
+  window.addEventListener('hf-seek', (e) => render(e.detail.time));
+
+  // The paused timeline HyperFrames seeks: one linear tween of a clock whose setter draws that time.
+  await built;
+  let now = 0;
+  const clock = {
+    get t() { return now; },
+    set t(v) { now = v; render(v); },
+  };
+  const tl = gsap.timeline({ paused: true });
+  tl.to(clock, { t: info.duration, duration: info.duration, ease: 'none' }, 0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

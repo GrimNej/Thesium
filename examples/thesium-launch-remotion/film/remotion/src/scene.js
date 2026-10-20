@@ -1,0 +1,502 @@
+// The launch film's picture, from examples/thesium-launch-web/film/index.html, as a module any
+// page can mount: the same scenes, keys, shader and timings. Only how it finds its page, its assets
+// and its fonts differs; each engine drives the clock its own way and calls render(t).
+// Fonts (Unbounded, Space Grotesk, JetBrains Mono) are declared by the page that mounts it.
+import { ease, spring, clamp, lerp, rand, frameTime } from './motion.js';
+
+export const CSS = `  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #05070c; }
+  canvas, .layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .layer { overflow: hidden; }
+  .abs { position: absolute; left: 0; top: 0; will-change: auto; }
+  .t { white-space: nowrap; line-height: 1; }
+  .t span { display: inline-block; white-space: pre; }
+  #vignette { background: radial-gradient(ellipse 80% 75% at 50% 50%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.18) 65%, rgba(0,0,0,0.55) 100%); }
+  #grain { mix-blend-mode: overlay; opacity: 0.16; }
+  .card { position: absolute; left: 0; top: 0; transform-style: preserve-3d; backface-visibility: hidden; }
+  .card img { display: block; width: 100%; height: 100%; }
+  .card .light { position: absolute; inset: 0; }
+`;
+
+export const MARKUP = `<canvas id="world"></canvas>
+<div class="layer" id="stage"></div>
+<canvas id="fx"></canvas>
+<div class="layer" id="vignette"></div>
+<canvas id="grain"></canvas>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="liquid" x="-20%" y="-40%" width="140%" height="180%">
+    <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="7" />
+    <feDisplacementMap id="disp" in="SourceGraphic" scale="0" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
+`;
+
+/**
+ * Builds the film inside `root` and resolves to render(t) once fonts and images are ready.
+ * @param {HTMLElement} root
+ * @param {{ width: number, height: number, fps: number, params: Record<string, any> }} info
+ * @param {(path: string) => string} url maps the web film's paths (/assets/…) to this page's
+ */
+export async function createScene(root, info, assetUrl) {
+  root.innerHTML = `<style>${CSS}</style>${MARKUP}`;
+  const { width: W, height: H, params } = info;
+  const CX = W / 2, CY = H / 2;
+  const INK = '#05070c', BONE = '#f3efe6', STEEL = '#8a93a3', LIGHT = '#bcc4cf', WARM = '#ffb347';
+  const CYAN = params.accent || '#6fe7f2';
+
+  // ── Keys with the same feels as the EffectCraft kit ─────────────────────────
+  const inExpo = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 2 ** (10 * t - 10));
+  const FEEL = { linear: ease.linear, out: ease.outQuart, in: ease.in, inOut: ease.inOut, smooth: ease.smooth, expo: ease.outExpo, inExpo, snap: ease.snap };
+  /** keys [[t, v, feel?]…]: a key's feel shapes the move that ends on it; "hold" keeps the earlier value. */
+  function K(keys, feel = 'out') {
+    return (t) => {
+      if (t <= keys[0][0]) return keys[0][1];
+      for (let i = 1; i < keys.length; i++) {
+        const [t1, v1, f = feel] = keys[i];
+        const [t0, v0] = keys[i - 1];
+        if (t < t1) {
+          if (f === 'hold') return v0;
+          const p = FEEL[f](clamp((t - t0) / (t1 - t0)));
+          return Array.isArray(v0) ? v0.map((a, j) => lerp(a, v1[j], p)) : lerp(v0, v1, p);
+        }
+      }
+      return keys[keys.length - 1][1];
+    };
+  }
+  const updaters = [];
+  const on = (fn) => updaters.push(fn);
+  const visible = (el, t, a, b) => { el.style.display = t >= a && t < b ? '' : 'none'; return t >= a && t < b; };
+
+  // ── DOM helpers ──────────────────────────────────────────────────────────────
+  const stage = root.querySelector('#stage');
+  function el(tag, css = {}, parent = stage) {
+    const e = document.createElement(tag);
+    e.className = 'abs';
+    Object.assign(e.style, css);
+    parent.append(e);
+    return e;
+  }
+  /** Places an element centred (or anchored) at x, y with transforms. */
+  function place(e, { x = 0, y = 0, s = 1, sx = s, sy = s, r = 0, o = 1, ax = 0.5, ay = 0.5 }) {
+    e.style.transform = `translate(${x}px, ${y}px) translate(${-ax * 100}%, ${-ay * 100}%) rotate(${r}deg) scale(${sx}, ${sy})`;
+    e.style.transformOrigin = `${ax * 100}% ${ay * 100}%`;
+    e.style.opacity = String(o);
+  }
+  const FONTS = {
+    display: { family: 'Unbounded', weight: 900 },
+    statement: { family: 'Space Grotesk', weight: 700 },
+    line: { family: 'Space Grotesk', weight: 500 },
+    mono: { family: 'JetBrains Mono', weight: 500 },
+  };
+  /**
+   * Text split into units (chars or words) so reveals can address each, the way EffectCraft's
+   * range selector does: a ramp of `spread` % slides from before the text to after it.
+   */
+  function text(str, f, size, color, o = {}) {
+    const e = el('div', { fontFamily: `'${f.family}'`, fontWeight: String(f.weight), fontSize: `${size}px`, color, letterSpacing: `${(o.tracking || 0) / 1000}em` }, o.parent);
+    e.classList.add('t');
+    const parts = o.by === 'words' ? str.split(/(\s+)/) : o.by === 'chars' ? [...str] : [str];
+    const units = [];
+    for (const p of parts) {
+      const span = document.createElement('span');
+      span.textContent = p;
+      e.append(span);
+      if (p.trim()) units.push(span);
+    }
+    if (o.glow) e.style.textShadow = o.glow;
+    e.units = units;
+    return e;
+  }
+  function reveal(e, t, t0, d, from, spread = 40) {
+    const off = lerp(-spread, 100, ease.outQuart(clamp((t - t0) / d)));
+    const n = e.units.length;
+    e.units.forEach((u, i) => {
+      const pos = ((i + 0.5) / n) * 100;
+      const a = clamp((pos - off) / spread); // 1 = fully at `from`, 0 = at rest
+      u.style.transform = `translateY(${(from.y || 0) * a}px)`;
+      u.style.opacity = String(1 - (from.opacity === 0 ? a : 0));
+      u.style.filter = from.blur ? `blur(${from.blur * a}px)` : '';
+    });
+  }
+  /** Shows only what is left (side "left") or right of a vertical line at page x. */
+  function clipAt(e, x, side) {
+    const r = e.getBoundingClientRect();
+    const k = r.width / (e.offsetWidth || r.width || 1); // the element's on-screen scale
+    const local = (x - r.left) / k;
+    const w = e.offsetWidth;
+    e.style.clipPath = side === 'left' ? `inset(-50% ${Math.max(0, w - local)}px -50% -50%)` : `inset(-50% -50% -50% ${Math.max(0, local)}px)`;
+  }
+  const clipOff = (e) => { e.style.clipPath = ''; };
+
+  // ── World: cold fractal fog in a shader ─────────────────────────────────────
+  const world = root.querySelector('#world');
+  world.width = W; world.height = H;
+  const gl = world.getContext('webgl2', { preserveDrawingBuffer: true });
+  const prog = (() => {
+    const vs = `#version 300 es
+    in vec2 p; out vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0., 1.); }`;
+    const fs = `#version 300 es
+    precision highp float; in vec2 uv; out vec4 o; uniform float t; uniform vec2 res; uniform float opacity;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.-2.*f);
+      return mix(mix(h(i), h(i+vec2(1,0)), u.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), u.x), u.y); }
+    float fbm(vec2 p, float e){ float v = 0., a = .5; mat2 r = mat2(.8,.6,-.6,.8);
+      for (int k = 0; k < 6; k++){ v += a * abs(n(p + e) * 2. - 1.); p = r * p * 2.03 + 3.1; e *= 1.3; a *= .5; } return v; }
+    void main(){
+      vec2 p = (uv * res) / 460. + vec2(t * 0.03, 0.);
+      float v = fbm(p, t * 0.05);
+      v = clamp((v - 0.5) * 1.3 + 0.5 - 0.08, 0., 1.);
+      vec3 ink = vec3(0.020, 0.027, 0.047), tint = vec3(0.114, 0.302, 0.431);
+      o = vec4(mix(ink, mix(ink, tint, 0.14 + 0.86 * v), opacity), 1.);
+    }`;
+    const make = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, make(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, make(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    return pr;
+  })();
+  const fogOpacity = K([[0.8, 0], [2.2, 0.65, 'inOut'], [4.0, 1, 'inOut'], [20.0, 1], [20.6, 0.75, 'out'], [25.0, 0.75], [26.0, 0.85, 'inOut']]);
+  function drawWorld(t) {
+    gl.viewport(0, 0, W, H);
+    gl.uniform1f(gl.getUniformLocation(prog, 't'), t);
+    gl.uniform2f(gl.getUniformLocation(prog, 'res'), W, H);
+    gl.uniform1f(gl.getUniformLocation(prog, 'opacity'), fogOpacity(t));
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  // ── Effects canvas: flare and sparks ────────────────────────────────────────
+  const fx = root.querySelector('#fx');
+  fx.width = W; fx.height = H;
+  const g = fx.getContext('2d');
+  const flareK = K([[0.15, 0], [0.45, 0.72, 'out'], [1.3, 0, 'in']]);
+  function drawFlare(t) {
+    const b = flareK(t);
+    if (b <= 0.001) return;
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const core = g.createRadialGradient(CX, CY, 0, CX, CY, 320);
+    core.addColorStop(0, `rgba(255,255,255,${b})`); core.addColorStop(0.08, `rgba(255,255,255,${0.95 * b})`);
+    core.addColorStop(0.22, `rgba(190,235,255,${0.45 * b})`); core.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = core; g.fillRect(CX - 320, CY - 320, 640, 640);
+    for (const [rad, a, c] of [[260, 0.18, '120,190,255'], [330, 0.12, '255,160,90'], [120, 0.25, '255,255,255']]) {
+      g.strokeStyle = `rgba(${c},${a * b * 1.6})`; g.lineWidth = 14; g.filter = 'blur(6px)'; g.beginPath(); g.arc(CX, CY, rad, 0, Math.PI * 2); g.stroke(); g.filter = 'none';
+    }
+    g.translate(CX, CY);
+    g.filter = 'blur(3px)';
+    for (let i = 0; i < 3; i++) {
+      g.rotate(Math.PI / 3);
+      const ray = g.createLinearGradient(-700, 0, 700, 0);
+      ray.addColorStop(0, 'rgba(255,248,235,0)'); ray.addColorStop(0.5, `rgba(255,248,235,${0.7 * b})`); ray.addColorStop(1, 'rgba(255,248,235,0)');
+      g.fillStyle = ray; g.fillRect(-700, -5, 1400, 10);
+    }
+    g.filter = 'none';
+    g.restore();
+  }
+  const sparks = Array.from({ length: 56 }, (_, i) => {
+    const r = rand(3000 + i);
+    return { sp: lerp(70, 210, r()), x0: r() * W, ph: r() * (H + 200), wob: lerp(0.4, 1.4, r()), s: lerp(0.35, 1.5, r()), o: lerp(0.25, 0.85, r()), warm: i % 4 ? WARM : '#ff7a3d' };
+  });
+  function drawSparks(t) {
+    if (t < 7.9 || t >= 12.3) return;
+    g.save();
+    for (const s of sparks) {
+      const y = H + 100 - ((t * s.sp + s.ph) % (H + 200));
+      const x = s.x0 + Math.sin(t * s.wob + s.ph) * 26;
+      const r = 5 * s.s;
+      const halo = g.createRadialGradient(x, y, 0, x, y, r * 5);
+      halo.addColorStop(0, s.warm); halo.addColorStop(0.25, s.warm + '88'); halo.addColorStop(1, s.warm + '00');
+      g.globalAlpha = s.o; g.fillStyle = halo; g.beginPath(); g.arc(x, y, r * 5, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+  }
+
+  // ── Grain ───────────────────────────────────────────────────────────────────
+  const grain = root.querySelector('#grain');
+  grain.width = W / 2; grain.height = H / 2;
+  const gg = grain.getContext('2d');
+  const grainImg = gg.createImageData(W / 2, H / 2);
+  function drawGrain(t) {
+    const r = rand(91 + (Math.floor(t * 24) % 12));
+    const d = grainImg.data;
+    for (let i = 0; i < d.length; i += 4) { const v = r() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+    gg.putImageData(grainImg, 0, 0);
+  }
+
+  // ── 0–3 Hook ────────────────────────────────────────────────────────────────
+  const ruler = el('div', { width: '1680px', height: '3px', background: CYAN, boxShadow: `0 0 18px ${CYAN}, 0 0 4px ${CYAN}` });
+  const rulerScale = K([[0.3, 0], [1.3, 1, 'expo']]);
+  const hookFade = K([[2.5, 1], [2.9, 0, 'in']]);
+  const spark = el('div', { width: '20px', height: '20px', borderRadius: '50%', background: '#e9fdff', boxShadow: `0 0 30px 10px ${CYAN}, 0 0 80px 30px rgba(111,231,242,0.35)` });
+  const sparkScale = K([[0.15, 0], [0.45, 1, 'expo']]);
+  const sparkX = K([[2.0, CX], [2.45, 120, 'inExpo']]);
+  const sparkO = K([[2.45, 1], [2.7, 0, 'out']]);
+  const tickXs = [-560, -280, 0, 280, 560];
+  const ticks = tickXs.map((dx, i) => {
+    const tt = 0.5 + i * 0.5;
+    const tick = el('div', { width: '3px', height: '34px', background: CYAN, boxShadow: `0 0 10px ${CYAN}` });
+    const mark = text(`${tt.toFixed(1)} s`, FONTS.mono, 34, STEEL, { by: 'chars' });
+    return { tick, mark, tt, y: K([[tt - 0.18, CY - 90], [tt, CY - 18, 'expo']]), o: K([[tt - 0.18, 0], [tt - 0.03, 1, 'out']]), dx };
+  });
+  const clock = text('t = 0.00', FONTS.mono, 64, CYAN);
+  const clockIn = K([[1.15, 0], [1.5, 1, 'out']]);
+  on((t) => {
+    const show = t < 3.4;
+    for (const e of [ruler, spark, clock]) e.style.display = show ? '' : 'none';
+    if (!show) { ticks.forEach((k) => { k.tick.style.display = k.mark.style.display = 'none'; }); return; }
+    place(ruler, { x: CX, y: CY, sx: rulerScale(t), sy: 1, o: hookFade(t) });
+    place(spark, { x: sparkX(t), y: CY, s: sparkScale(t), o: t < 3.0 ? sparkO(t) : 0 });
+    for (const k of ticks) {
+      const v = t >= k.tt - 0.2;
+      k.tick.style.display = k.mark.style.display = v ? '' : 'none';
+      if (!v) continue;
+      place(k.tick, { x: CX + k.dx, y: k.y(t), o: k.o(t) * hookFade(t) });
+      place(k.mark, { x: CX + k.dx, y: CY - 74, o: hookFade(t) });
+      reveal(k.mark, t, k.tt, 0.25, { y: -14, opacity: 0 });
+    }
+    clock.firstChild.textContent = `t = ${frameTime(t).toFixed(2)}`;
+    place(clock, { x: CX, y: CY + 96, o: clockIn(t) * hookFade(t) });
+  });
+
+  // ── 3–8 Premise ─────────────────────────────────────────────────────────────
+  const premise = el('div', { width: `${W}px`, height: `${H}px` });
+  const premiseLine = (str, y, color) => { const e = text(str, FONTS.statement, 118, color, { by: 'words', tracking: -10, parent: premise }); e.cy = y; return e; };
+  const pA = premiseLine('Every frame', 450, STEEL), pB = premiseLine('is a function of time.', 600, STEEL);
+  const bA = premiseLine('Every frame', 450, BONE), bB = premiseLine('is a function of time.', 600, BONE);
+  const SWEEP_A = 5.0, SWEEP_B = 6.5, X0 = 120, X1 = W - 120;
+  const premiseCollapse = K([[7.35, 1], [8.0, 0.22, 'inExpo']]);
+  const premiseO = K([[7.6, 1], [8.0, 0, 'in']]);
+  on((t) => {
+    if (!visible(premise, t, 2.9, 8.2)) return;
+    const push = 1.04 + (1 - 1.04) * spring(t - 3.0, 10, 0.92);
+    const s = push * premiseCollapse(t);
+    premise.style.transformOrigin = `${CX}px ${CY}px`;
+    premise.style.transform = `scale(${s})`;
+    premise.style.opacity = String(premiseO(t));
+    for (const [e, t0, d] of [[pA, 3.0, 0.55], [pB, 4.0, 0.75], [bA, 3.0, 0.55], [bB, 4.0, 0.75]]) {
+      place(e, { x: CX, y: e.cy });
+      reveal(e, t, t0, d, { y: 70, opacity: 0, blur: 14 });
+    }
+    const x = playheadX(t);
+    for (const e of [bA, bB]) clipAt(e, t < SWEEP_A ? X0 : x, 'left');
+  });
+
+  // ── 8–12 Reveal ─────────────────────────────────────────────────────────────
+  const nameWrap = el('div', {});
+  const nameGlow = K([[8.95, 0.75], [9.15, 1.5, 'out'], [10.2, 0.75, 'inOut']]);
+  const name = text('THESIUM', FONTS.display, 236, '#dcd8cf', { tracking: 60, parent: nameWrap });
+  // The slam's zoom streaks: copies of the name at growing scale, fading with the blur amount.
+  const streaks = Array.from({ length: 12 }, () => text('THESIUM', FONTS.display, 236, '#dcd8cf', { tracking: 60, parent: nameWrap }));
+  streaks.forEach((e) => { e.style.filter = 'blur(6px)'; });
+  const glint = text('THESIUM', FONTS.display, 236, 'transparent', { tracking: 60, parent: nameWrap });
+  glint.style.webkitBackgroundClip = 'text'; glint.style.backgroundClip = 'text';
+  const nameScale = K([[7.95, 2.5], [8.7, 1, 'expo'], [12.0, 1.04, 'linear']]);
+  const nameO = K([[7.95, 0], [8.07, 1, 'out']]);
+  const slamBlur = K([[7.3, 0], [8.0, 0.78, 'in'], [8.85, 0, 'out']]);
+  const glintX = K([[9.0, -300], [10.5, W + 300, 'inOut']]);
+  const sub = text('a motion studio for frontier models', FONTS.line, 58, LIGHT, { by: 'words' });
+  on((t) => {
+    visible(sub, t, 9.0, 12.3);
+    if (!visible(nameWrap, t, 7.95, 12.3)) return;
+    const s = nameScale(t);
+    const glow = nameGlow(t);
+    name.style.textShadow = `0 0 ${18 * glow}px rgba(255,250,240,${0.55 * glow}), 0 0 ${56 * glow}px rgba(200,230,255,${0.35 * glow})`;
+    place(name, { x: CX, y: CY - 40, s, o: nameO(t) });
+    const amount = slamBlur(t);
+    streaks.forEach((e, i) => place(e, { x: CX, y: CY - 40, s: s * (1 + amount * 0.16 * (i + 1)), o: amount * 0.42 * (1 - i / streaks.length) }));
+    const gx = glintX(t);
+    glint.style.display = t >= 8.9 && t < 10.7 ? '' : 'none';
+    glint.style.backgroundImage = `linear-gradient(108deg, rgba(255,255,255,0) ${gx - 260}px, rgba(255,255,255,0.75) ${gx}px, rgba(255,255,255,0) ${gx + 260}px)`;
+    glint.style.backgroundSize = `${W}px 100%`;
+    glint.style.backgroundPosition = `${-(CX - 0)}px 0`;
+    place(glint, { x: CX, y: CY - 40, s, o: nameO(t) });
+    place(sub, { x: CX, y: CY + 110 });
+    reveal(sub, t, 9.2, 0.7, { y: 30, opacity: 0, blur: 8 });
+  });
+  // Premise collapse and the slam share one radial smear in the EffectCraft film; here the premise
+  // collapses through motion blur (4 samples) and the name's zoom streaks carry the blur.
+
+  // ── 12–15 The wall of frames (CSS 3D) ───────────────────────────────────────
+  const wall = el('div', { width: `${W}px`, height: `${H}px`, perspective: '1500px', perspectiveOrigin: '50% 48%' });
+  const world3d = el('div', { width: `${W}px`, height: `${H}px`, transformStyle: 'preserve-3d' }, wall);
+  const frames = ['ec-title', 'web-title', 'ec-3d-cards', 'ec-liquid', 'ec-gradient', 'ec-flare', 'ec-impact', 'ec-embers'];
+  const imgs = [];
+  for (let i = 0; i < 20; i++) {
+    const col = i % 5, row = Math.floor(i / 5);
+    const src = frames[(col * 2 + row * 3) % frames.length];
+    const card = el('div', { width: '595px', height: '335px' }, world3d);
+    card.className = 'card';
+    const img = document.createElement('img'); img.src = assetUrl(`/assets/frames/${src}.jpg`); card.append(img); imgs.push(img);
+    const light = document.createElement('div'); light.className = 'light'; card.append(light);
+    const x = (col - 2) * 640, y = (row - 1) * 370, z = -Math.abs(col - 2) * 240;
+    card.style.transform = `translate3d(${CX + x - 297}px, ${CY + y - 167}px, ${z}px) rotateY(${(col - 2) * 16}deg)`;
+    // A spot from the upper left: brighter cards near it, a falloff across each card.
+    const near = clamp(1 - Math.hypot(col - 1.2, row - 0.6) / 3.2);
+    light.style.background = `linear-gradient(115deg, rgba(255,255,255,${0.10 * near}) 0%, rgba(0,0,0,${0.55 - 0.4 * near}) 100%)`;
+  }
+  const scrim = el('div', { width: `${W}px`, height: '470px', top: `${H - 470}px`, background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.78) 62%, rgba(0,0,0,0.72) 100%)' }, wall);
+  const seesLine = text('It sees every frame it makes.', FONTS.statement, 82, BONE, { by: 'words', tracking: -10, parent: wall });
+  const camX = K([[11.5, -520], [15.1, 380, 'linear']]);
+  const camZ = K([[11.5, -350], [15.1, 0, 'linear']]);
+  const wallX = K([[14.6, 0], [15.05, -W + 40, 'inExpo']]);
+  on((t) => {
+    if (!visible(wall, t, 11.45, 15.1)) return;
+    world3d.style.transform = `translate3d(${-camX(t) * 0.9}px, 20px, ${camZ(t)}px)`;
+    wall.style.transform = `translateX(${wallX(t)}px)`;
+    place(seesLine, { x: 150, y: H - 150, ax: 0, ay: 0.5 });
+    reveal(seesLine, t, 11.5 + 0.75, 0.6, { y: 40, opacity: 0, blur: 10 });
+    if (t < 12.2) clipAt(wall, playheadX(t), 'right'); else clipOff(wall);
+  });
+
+  // ── 15–17.5 Any engine (SVG liquid displacement) ────────────────────────────
+  const engines = el('div', { width: `${W}px`, height: `${H}px` });
+  const head = text('Any engine renders it.', FONTS.statement, 76, LIGHT, { by: 'words', parent: engines });
+  const names = ['WEB', 'EFFECTCRAFT', 'REMOTION', 'HYPERFRAMES', 'ANY CLI'].map((n) => {
+    const e = text(n, FONTS.display, n.length > 8 ? 150 : 176, BONE, { tracking: 20, parent: engines });
+    e.style.filter = 'url(#liquid)';
+    return e;
+  });
+  const turb = root.querySelector('#turb'), disp = root.querySelector('#disp');
+  const enginesX = K([[14.6, W - 40], [15.05, 0, 'expo']]);
+  const headO = K([[17.2, 1], [17.55, 0, 'in']]);
+  on((t) => {
+    if (!visible(engines, t, 14.6, 17.9)) return;
+    const local = t - 14.6;
+    engines.style.transform = `translateX(${enginesX(t)}px)`;
+    place(head, { x: CX, y: 290, o: headO(t) });
+    reveal(head, t, 14.6 + 0.45, 0.5, { y: 26, opacity: 0, blur: 8 });
+    let amount = 0;
+    names.forEach((e, i) => {
+      const t0 = 0.4 + i * 0.5;
+      const last = i === names.length - 1;
+      const v = local >= t0 && local < (last ? 3.3 : t0 + 0.5);
+      e.style.display = v ? '' : 'none';
+      if (!v) return;
+      const s = K([[t0, 1.12], [t0 + 0.3, 1, 'expo']])(local);
+      const onset = K([[t0, 70], [t0 + 0.28, 0, 'out']])(local);
+      const melt = last ? K([[2.72, 0], [3.05, 240, 'in']])(local) : 0;
+      amount = Math.max(onset, melt);
+      place(e, { x: CX, y: CY + 60, s, o: last ? K([[2.75, 1], [3.05, 0, 'in']])(local) : 1 });
+    });
+    disp.setAttribute('scale', String(amount * 1.2));
+    turb.setAttribute('baseFrequency', `${0.012 + 0.002 * Math.sin(t * 9)} ${0.02 + 0.003 * Math.cos(t * 7)}`);
+  });
+
+  // ── 17.5–20 Notes on the timeline: the real studio on a tilted plane ────────
+  const notes = el('div', { width: `${W}px`, height: `${H}px` });
+  const planeWrap = el('div', { width: `${W}px`, height: `${H}px`, perspective: '1700px' }, notes);
+  const plane = el('div', { width: '1440px', height: '900px', transformStyle: 'preserve-3d' }, planeWrap);
+  const shot = document.createElement('img'); shot.src = assetUrl('/assets/studio.png'); shot.style.cssText = 'display:block;width:1440px;height:900px;box-shadow:0 40px 120px rgba(0,0,0,.7)';
+  plane.append(shot);
+  const pin = el('div', { width: '30px', height: '30px', borderRadius: '50%', background: '#f3c969', boxShadow: '0 0 18px rgba(243,201,105,.8)' }, plane);
+  const ring = el('div', { width: '30px', height: '30px', borderRadius: '50%', border: '4px solid #f3c969', boxSizing: 'border-box' }, plane);
+  const notesScrim = el('div', { width: `${W}px`, height: '360px', background: 'linear-gradient(180deg, rgba(0,0,0,0.78) 30%, rgba(0,0,0,0) 100%)' }, notes);
+  const notesLine = text('Notes land on the timeline.', FONTS.statement, 78, BONE, { by: 'words', tracking: -10, parent: notes });
+  const NOTES_IN = 17.62;
+  const notesO = K([[17.62, 0], [17.9, 1, 'out'], [19.8, 1], [19.96, 0, 'in']]);
+  const notesS = K([[17.62, 0.92], [18.2, 1, 'expo']]);
+  on((t) => {
+    if (!visible(notes, t, NOTES_IN, 20.0)) return;
+    const local = t - NOTES_IN;
+    notes.style.opacity = String(notesO(t));
+    const cam = K([[0, 0], [2.75, 1, 'out']])(local);
+    planeWrap.style.transformOrigin = `${CX}px ${CY}px`;
+    planeWrap.style.transform = `scale(${notesS(t) * lerp(1.0, 1.16, cam)})`;
+    plane.style.transform = `translate(${CX - 720 + lerp(-40, 30, cam)}px, ${CY - 430}px) rotateX(14deg) rotateY(-16deg)`;
+    const py = K([[0.9, 600], [1.3, 755, 'expo']])(local);
+    place(pin, { x: 640, y: py, o: K([[0.9, 0], [1.0, 1, 'out']])(local) });
+    place(ring, { x: 640, y: 755, s: K([[1.3, 1], [1.9, 3.8, 'out']])(local), o: local < 1.3 ? 0 : K([[1.3, 0.9], [1.9, 0, 'out']])(local) });
+    place(notesLine, { x: 150, y: 150, ax: 0, ay: 0.5 });
+    reveal(notesLine, local, 0.35, 0.6, { y: 36, opacity: 0, blur: 10 });
+  });
+
+  // ── 20–25 Same film, and the hand-off to the end card ───────────────────────
+  const same = text('SAME FILM.', FONTS.display, 210, BONE, { tracking: 30 });
+  const sameSub = text('The model directs. Any engine renders.', FONTS.line, 60, LIGHT, { by: 'words' });
+  const sameScale = K([[19.95, 1.75], [20.5, 1, 'expo']]);
+  const sameO = K([[19.95, 0], [20.03, 1, 'out']]);
+  const HANDOFF_A = 24.6, HANDOFF_B = 25.25;
+  on((t) => {
+    if (visible(same, t, 19.95, 25.3)) {
+      place(same, { x: CX, y: CY - 50, s: sameScale(t), o: sameO(t) });
+      if (t >= HANDOFF_A) clipAt(same, playheadX(t), 'left'); else clipOff(same);
+    }
+    if (visible(sameSub, t, 20.6, 25.3)) {
+      place(sameSub, { x: CX, y: CY + 110 });
+      reveal(sameSub, t, 20.8, 0.7, { y: 26, opacity: 0, blur: 8 });
+      if (t >= HANDOFF_A) clipAt(sameSub, playheadX(t), 'left'); else clipOff(sameSub);
+    }
+  });
+
+  // ── 25–30 End ────────────────────────────────────────────────────────────────
+  const endName = text('THESIUM', FONTS.display, 150, BONE, { tracking: 60 });
+  const tag = text('Any engine. Same film.', FONTS.line, 60, BONE);
+  const url = text('github.com/GrimNej/Thesium', FONTS.mono, 50, CYAN);
+  const endScale = K([[25.0, 1], [30.0, 1.03, 'linear']]);
+  on((t) => {
+    const s = endScale(t);
+    for (const [e, y] of [[endName, 400], [tag, 545], [url, 690]]) {
+      if (!visible(e, t, HANDOFF_A, 31)) continue;
+      const yy = e === url ? y : CY + (y - CY) * s;
+      place(e, { x: CX, y: yy, s: e === url ? 1 : s });
+      if (t < HANDOFF_B + 0.05) clipAt(e, playheadX(t), 'right'); else clipOff(e);
+    }
+    const glow = 0.6;
+    endName.style.textShadow = `0 0 ${16 * glow}px rgba(255,250,240,${0.6 * glow}), 0 0 ${44 * glow}px rgba(200,230,255,${0.4 * glow})`;
+  });
+
+  // ── The playhead: one line, the whole film ──────────────────────────────────
+  const playhead = el('div', { width: '4px', height: `${H}px`, background: CYAN, boxShadow: `0 0 22px 2px ${CYAN}` });
+  const readout = text('t = 0.00', FONTS.mono, 40, INK);
+  const pill = el('div', { height: '64px', borderRadius: '12px', background: CYAN });
+  pill.after(readout);
+  const phX = K([
+    [2.4, X0], [SWEEP_A, X0], [SWEEP_B, X1, 'inOut'], [7.3, X1], [7.9, CX, 'inExpo'],
+    [11.45, W, 'hold'], [12.2, 0, 'inOut'],
+    [20.4, -10, 'hold'], [21.5, W + 10, 'inOut'],
+    [21.9, -10, 'hold'], [23.0, W + 10, 'inOut'],
+    [23.4, -10, 'hold'], [24.5, W + 10, 'inOut'],
+    [HANDOFF_A, W, 'linear'], [HANDOFF_B, 0, 'inOut'],
+  ]);
+  function playheadX(t) { return phX(t); }
+  const phO = K([
+    [2.4, 0], [2.5, 1, 'out'], [7.6, 1], [7.9, 0, 'in'],
+    [11.4, 0, 'hold'], [11.45, 1, 'hold'], [12.2, 1], [12.35, 0, 'in'],
+    [20.35, 0, 'hold'], [20.4, 1, 'hold'], [HANDOFF_B, 1], [HANDOFF_B + 0.1, 0, 'in'],
+  ]);
+  const phRise = K([[2.4, 0], [3.0, 1, 'expo']]);
+  const underline = K([[25.6, 0], [26.3, 1, 'expo']]);
+  on((sampleTime) => {
+    const t = frameTime(sampleTime); // sharp under motion blur: every sample draws it in the same place
+    // The playhead lies down and becomes the address's underline.
+    if (t >= 25.6) {
+      const w = url.getBoundingClientRect().width + 40;
+      place(playhead, { x: CX, y: 750, sx: (w * underline(t)) / 4, sy: 4 / H, o: 1 });
+      playhead.style.transform += ' rotate(90deg)';
+      playhead.style.transform = `translate(${CX}px, 750px) translate(-50%, -50%) scale(${(w * underline(t)) / H}, 1) rotate(90deg)`;
+    } else place(playhead, { x: playheadX(t), y: CY, sx: 1, sy: phRise(t), o: t >= 2.4 ? phO(t) : 0 });
+    const label = t < 20 ? '' : t < 21.7 ? '  ·  web' : t < 23.2 ? '  ·  effectcraft' : t < 24.55 ? '  ·  remotion' : '';
+    const showPill = t >= 4.9 && t < 25.4 && phO(t) > 0.01;
+    readout.style.display = pill.style.display = showPill ? '' : 'none';
+    if (!showPill) return;
+    readout.firstChild.textContent = `t = ${t.toFixed(2)}${label}`;
+    const rw = readout.getBoundingClientRect().width;
+    const x = playheadX(t);
+    const px = x + (x > W - 320 ? -1 : 1) * (rw / 2 + 34);
+    pill.style.width = `${rw + 44}px`;
+    place(pill, { x: px, y: 96, o: phO(t) });
+    place(readout, { x: px, y: 96, o: phO(t) });
+  });
+
+  await document.fonts.ready;
+  await Promise.all([...imgs, shot].map((i) => i.decode()));
+
+  return (t) => {
+    drawWorld(t);
+    g.clearRect(0, 0, W, H);
+    drawFlare(t);
+    drawSparks(t);
+    drawGrain(t);
+    for (const u of updaters) u(t);
+  };
+}

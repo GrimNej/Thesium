@@ -1,0 +1,34 @@
+{
+  "title": "Thesium (HyperFrames)",
+  "engine": "hyperframes",
+  "entry": "film/hyperframes",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "duration": 30,
+  "motionBlur": {
+    "samples": 8,
+    "shutter": 0.5
+  },
+  "audio": {
+    "gains": {
+      "music": 0,
+      "sfx": -5,
+      "voice": 0
+    },
+    "duck": "auto",
+    "loudness": -14,
+    "truePeak": -1,
+    "music": "audio/score.wav",
+    "sfx": "audio/sfx.wav"
+  },
+  "params": {
+    "accent": {
+      "type": "color",
+      "value": "#6fe7f2",
+      "label": "Accent (the clock)"
+    }
+  },
+  "engineOptions": {},
+  "language": "en"
+}
