@@ -147,7 +147,7 @@ export async function createFilm(dir, o) {
     JSON.stringify({ bpm: 120, offset: 0, beatsPerBar: 4, sections: [{ start: 0, name: 'Opening' }], cues: [] }, null, 2) + '\n',
   );
   await writeFile(path.join(workspace, 'assets', 'SOURCES.md'), '# Sources\n\n| File | Where it came from | Rights / notes |\n| --- | --- | --- |\n');
-  await writeFile(path.join(workspace, '.gitignore'), '.thesium/\n.thesium-build.jsx\nreview/\nout/\n');
+  await writeFile(path.join(workspace, '.gitignore'), '.thesium/\n.thesium-build.jsx\n.hyperframes/\nnode_modules/\nreview/\nout/\n');
   await syncWorkspace(workspace);
   return workspace;
 }

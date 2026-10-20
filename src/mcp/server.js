@@ -2,7 +2,7 @@
 // operations as the CLI; stills and sheets come back as images the model can look at directly,
 // so clients without a shell (Claude Desktop, for example) get the whole studio.
 import { createInterface } from 'node:readline';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { KNOWLEDGE_DIR, inside, rel } from '../core/paths.js';
@@ -116,8 +116,8 @@ const where = (args) => findWorkspace(args?.workspace || process.env.THESIUM_WOR
 /** Image content for the model: JPEG/PNG, at most `width` pixels wide. @param {string[]} files */
 async function images(files, width = 1280) {
   const out = [];
-  const tmp = path.join(os.tmpdir(), `thesium-mcp-${process.pid}`);
-  await mkdir(tmp, { recursive: true });
+  const tmp = await mkdtemp(path.join(os.tmpdir(), 'thesium-mcp-'));
+  try {
   for (const file of files.slice(0, 12)) {
     try {
       let source = file;
@@ -132,6 +132,9 @@ async function images(files, width = 1280) {
     } catch {
       /* an unreadable image is skipped; its path is still in the text */
     }
+  }
+  } finally {
+    await rm(tmp, { recursive: true, force: true });
   }
   return out;
 }

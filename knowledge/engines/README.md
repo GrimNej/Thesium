@@ -44,6 +44,6 @@ The person may name an engine; then that is the engine. Otherwise choose by the 
 | Spring | `spring(t - t0, w, z)` | `T.springTo(l, p, from, to, t0, {feel})` | `spring({frame, fps, config})` | baked tween or custom ease |
 | Seeded random | `rand(seed)` | `T.rand(seed)` | `random(seed)` | a seeded function |
 | Camera | a world transform or Three.js camera | a camera layer, or a parent null | a wrapper transform | a wrapper transform |
-| Motion blur | `motionBlur.samples` | native: `T.film()` + `T.blur(layer)` | `<CameraMotionBlur>` | `motionBlur.samples` |
+| Motion blur | `motionBlur.samples` | native: `T.film()` + `T.blur(layer)` | `motionBlur.samples` (time as `frame / fps`) | `motionBlur.samples` |
 | Glow / light | CSS shadows, WebGL bloom (`/kit/web/post.js`) | `Glow`, `CC Light Rays`, `CC Light Sweep`, `Lens Flare` | CSS / canvas | CSS / canvas |
 | Sound | Thesium mixes `audio/` for every engine | same | same | same |

@@ -2,8 +2,8 @@
 
 [HyperFrames](https://github.com/heygen-com/hyperframes) renders HTML compositions driven by a
 paused GSAP timeline. In Thesium the film is a HyperFrames project in `film/hyperframes/`. Thesium
-calls the HyperFrames CLI (`snapshot --at` for exact stills, `render --format png-sequence` for the
-whole film) and bundles none of it.
+calls the HyperFrames CLI (`snapshot --at` for exact stills, `render` for the whole film) and
+bundles none of it.
 
 ## Setup
 

@@ -1,4 +1,6 @@
 .thesium/
 .thesium-build.jsx
+.hyperframes/
+node_modules/
 review/
 out/
