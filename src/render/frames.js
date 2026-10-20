@@ -9,6 +9,24 @@ import { pool } from '../core/proc.js';
 import { averageImages, concatVideos, convertImage, ff, openEncoder, tile } from '../media/ffmpeg.js';
 
 /**
+ * How a native sequence renders motion blur, matching sampleTimes(): the engine draws `perFrame`
+ * sub-frames per frame on an even grid (fps × perFrame, capped by the engine's own limit), and each
+ * output frame averages the `window` sub-frames that fall inside its shutter, centred on its time.
+ * `last` is the window's last sub-frame relative to the frame's own, for FFmpeg's tmix, which
+ * averages backwards from the frame it outputs.
+ * @param {number} fps @param {number} samples @param {number} shutter fraction of a frame (0.5 = 180°)
+ * @param {number} [maxFps] the engine's highest sequence rate
+ */
+export function nativeSampling(fps, samples, shutter, maxFps = Infinity) {
+  if (samples <= 1 || shutter <= 0) return { perFrame: 1, window: 1, last: 0 };
+  const open = Math.min(1, shutter);
+  const ideal = Math.max(samples, Math.round(samples / open));
+  const perFrame = Math.max(1, Math.min(ideal, Math.floor(maxFps / fps)));
+  const window = Math.max(1, Math.min(perFrame, Math.round(perFrame * open)));
+  return { perFrame, window, last: Math.ceil(window / 2) - 1 };
+}
+
+/**
  * Renders exact times to image files (JPEG unless the name says .png).
  * With samples > 1 every still averages the samples across the shutter, like the master.
  * @param {import('../engines/index.js').Session} session
@@ -113,15 +131,16 @@ export async function renderVideo(session, m, o) {
   await mkdir(scratch, { recursive: true });
   try {
     const dir = path.join(scratch, 'seq');
-    /** @type {{ pattern: string, format: string } | undefined} */
+    /** @type {{ pattern: string, format: string } | { video: string } | undefined} */
     let seq;
+    const plan = nativeSampling(fps, samples, shutter, session.maxSequenceFps);
     if (session.sequence) {
       try {
-        // Native render of every sample time; samples > 1 means sub-frames across the whole interval.
+        // Native render on a sub-frame grid when there is motion blur (see nativeSampling).
         seq = await session.sequence({
           from: first / fps,
           to: last / fps,
-          fps: fps * samples,
+          fps: fps * plan.perFrame,
           dir,
           onProgress: (done, total) => o.onProgress?.(done, total),
         });
@@ -131,17 +150,17 @@ export async function renderVideo(session, m, o) {
     }
     if (seq) {
       const filters = [];
-      if (samples > 1) filters.push(`tmix=frames=${samples}`, `select='not(mod(n+1\\,${samples}))'`, `setpts=N/(${fps}*TB)`);
+      if (plan.window > 1) filters.push(`tmix=frames=${plan.window}`);
+      if (plan.perFrame > 1) filters.push(`select='eq(mod(n-${plan.last}\\,${plan.perFrame})\\,0)*gte(n\\,${plan.last})'`, `setpts=N/(${fps}*TB)`);
       filters.push('scale=trunc(iw/2)*2:trunc(ih/2)*2', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709', 'format=yuv420p');
-      const count = (await readdir(dir)).length;
-      if (!count) throw new Error('The engine rendered no frames');
+      let input;
+      if ('video' in seq) input = ['-i', seq.video];
+      else {
+        if (!(await readdir(dir)).length) throw new Error('The engine rendered no frames');
+        input = ['-framerate', String(fps * plan.perFrame), '-start_number', String(await firstNumber(dir)), '-i', seq.pattern];
+      }
       await ff([
-        '-framerate',
-        String(fps * samples),
-        '-start_number',
-        String(await firstNumber(dir)),
-        '-i',
-        seq.pattern,
+        ...input,
         '-vf',
         filters.join(','),
         '-r',
