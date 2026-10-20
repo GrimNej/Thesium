@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap { display: grid; grid-template-columns: 1fr; margin-top: 46px; }
+  .tree { border-radius: 20px; background: rgba(5, 7, 12, 0.85); border: 1px solid var(--line); padding: 30px 34px 30px; }
+  .bar { display: flex; gap: 9px; margin-bottom: 22px; }
+  .bar i { width: 13px; height: 13px; border-radius: 50%; background: #2a3b52; }
+  .row { display: grid; grid-template-columns: 330px 140px 1fr; align-items: center; padding: 11px 0; border-top: 1px solid rgba(34, 52, 75, 0.6); }
+  .row:first-of-type { border-top: 0; }
+  .name { font: 600 25px/1 var(--mono); color: var(--bone); }
+  .name.dir { color: var(--cyan); }
+  .name .indent { color: #34465c; }
+  .who { justify-self: start; font: 700 14px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 9px; border-radius: 6px; }
+  .you { color: var(--amber); background: rgba(255, 179, 71, 0.12); }
+  .model { color: var(--cyan); background: rgba(111, 231, 242, 0.12); }
+  .thesium { color: var(--green); background: rgba(126, 224, 138, 0.12); }
+  .what { font: 400 22px/1.3 var(--sans); color: var(--soft); }
+  .what b { color: var(--bone); font-weight: 600; }
+  .legend { display: flex; gap: 22px; margin-top: 26px; align-items: center; font: 400 19px/1 var(--sans); color: var(--soft); }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">Inside a film</div>
+  <div class="title">One folder is the whole film.</div>
+  <div class="lede">Everything a film needs lives in its folder, so it can be moved, shared, versioned and rebuilt anywhere.</div>
+  <div class="wrap">
+    <div class="tree">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="row"><span class="name dir">my-film/</span><span></span><span class="what"><b>thesium new my-film</b> makes this</span></div>
+      <div class="row"><span class="name"><span class="indent">├─ </span>thesium.json</span><span class="who you">you</span><span class="what">The film's facts: <b>engine, size, length, sound</b></span></div>
+      <div class="row"><span class="name"><span class="indent">├─ </span>BRIEF.md</span><span class="who you">you</span><span class="what">What you asked for, and the sources it may use</span></div>
+      <div class="row"><span class="name"><span class="indent">├─ </span>PLAN.md</span><span class="who model">model</span><span class="what">Every shot on a beat grid: words, motion, sound</span></div>
+      <div class="row"><span class="name"><span class="indent">├─ </span>timeline.json</span><span class="who model">model</span><span class="what">Sections and cues, shared by picture and sound</span></div>
+      <div class="row"><span class="name dir"><span class="indent">├─ </span>film/</span><span class="who model">model</span><span class="what"><b>The film itself</b>, as code for its engine</span></div>
+      <div class="row"><span class="name dir"><span class="indent">├─ </span>assets/</span><span class="who model">model</span><span class="what">Images, page captures, brand fonts, with <b>SOURCES.md</b></span></div>
+      <div class="row"><span class="name dir"><span class="indent">├─ </span>audio/</span><span class="who model">model</span><span class="what">Score and effects scripts, the narration script</span></div>
+      <div class="row"><span class="name dir"><span class="indent">├─ </span>review/</span><span class="who thesium">thesium</span><span class="what">Stills, strips, previews, checks, notes: <b>the evidence</b></span></div>
+      <div class="row"><span class="name dir"><span class="indent">├─ </span>out/</span><span class="who thesium">thesium</span><span class="what">Masters: <b>my-film-v1.mp4</b>, v2… with their QA reports</span></div>
+      <div class="row"><span class="name"><span class="indent">└─ </span>thesium.mjs</span><span class="who thesium">thesium</span><span class="what">The studio, from inside the folder: <b>node thesium.mjs help</b></span></div>
+    </div>
+  </div>
+  <div class="legend">Who writes it:<span class="who you">you</span>the person<span class="who model">model</span>the director<span class="who thesium">thesium</span>the studio</div>
+</div>
+</body>
+</html>

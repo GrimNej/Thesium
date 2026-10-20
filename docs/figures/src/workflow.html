@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .grid { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 52px; row-gap: 96px; margin-top: 56px; }
+  .grid .card { min-height: 228px; padding: 24px 26px; }
+  .head { display: flex; align-items: center; gap: 14px; }
+  .head h3 { margin: 0; }
+  .card p { font-size: 20px; margin-top: 12px; }
+  .cmd { margin-top: 14px; display: inline-block; padding: 7px 11px; border-radius: 8px; background: var(--ink); border: 1px solid var(--line); font: 500 16px/1.2 var(--mono); color: var(--cyan); }
+  svg.links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .tag { position: absolute; font: 600 16px/1 var(--mono); color: var(--cyan); background: var(--deep); padding: 5px 9px; border-radius: 6px; border: 1px solid rgba(111,231,242,0.35); white-space: nowrap; }
+  .tag.amber { color: var(--amber); border-color: rgba(255,179,71,0.45); }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">The director's loop</div>
+  <div class="title">How a film gets made, and gets good.</div>
+  <div class="lede">The model follows these steps on its own. Every step is one command, the same on every engine, run from the film's folder as <span class="code" style="font-size: 22px">node thesium.mjs …</span></div>
+
+  <div class="grid" id="grid">
+    <div class="card" id="s1">
+      <div class="head"><span class="num">1</span><svg class="icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z M14 3v4h4 M10 12h5 M10 16h5"/></svg><h3>Brief</h3></div>
+      <p>What the film is for, who watches it, what it must show.</p>
+      <span class="cmd">BRIEF.md</span>
+    </div>
+    <div class="card" id="s2">
+      <div class="head"><span class="num">2</span><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18 M9 4v16 M15 4v16"/></svg><h3>Plan</h3></div>
+      <p>Every shot on a beat grid: words, motion, sound.</p>
+      <span class="cmd">PLAN.md</span>
+    </div>
+    <div class="card lit" id="s3">
+      <div class="head"><span class="num">3</span><svg class="icon" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5 M16 7l5 5-5 5 M13 5l-2 14"/></svg><h3>Build</h3></div>
+      <p>The film, written as code for the chosen engine.</p>
+      <span class="cmd">film/</span>
+    </div>
+    <div class="card lit" id="s4">
+      <div class="head"><span class="num">4</span><svg class="icon" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><h3>Look</h3></div>
+      <p>Exact frames, strips across cuts, phone-size copies.</p>
+      <span class="cmd">still 4.5 --phone</span>
+    </div>
+    <div class="card" id="s8">
+      <div class="head"><span class="num">8</span><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z M8 9h8 M8 12h5"/></svg><h3>Review</h3></div>
+      <p>An independent critic, then you, with notes on the timeline.</p>
+      <span class="cmd">review · studio</span>
+    </div>
+    <div class="card" id="s7">
+      <div class="head"><span class="num">7</span><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9v6l5-3z"/></svg><h3>Master</h3></div>
+      <p>Full quality, mastered sound, technical and narration QA.</p>
+      <span class="cmd">master</span>
+    </div>
+    <div class="card" id="s6">
+      <div class="head"><span class="num">6</span><svg class="icon" viewBox="0 0 24 24"><path d="M3 12h2 M7 8v8 M11 5v14 M15 9v6 M19 7v10 M21 12h1"/></svg><h3>Sound</h3></div>
+      <p>Score, effects and narration, each measured.</p>
+      <span class="cmd">sound score · sfx · voice</span>
+    </div>
+    <div class="card" id="s5">
+      <div class="head"><span class="num">5</span><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M8.5 12l2.5 2.5 4.5-5"/></svg><h3>Check</h3></div>
+      <p>Rules, same frame every time, empty frames, language.</p>
+      <span class="cmd">check · preview</span>
+    </div>
+    <svg class="links" id="links"></svg>
+  </div>
+  <div class="foot">Steps 3 → 4 → 5 repeat until the frames are right. After the first master, the critic's notes drive one polish pass.</div>
+</div>
+<script>
+  // Connectors drawn from the cards' real positions.
+  const grid = document.getElementById('grid');
+  const svg = document.getElementById('links');
+  const box = (id) => { const g = grid.getBoundingClientRect(), r = document.getElementById(id).getBoundingClientRect(); return { l: r.left - g.left, r: r.right - g.left, t: r.top - g.top, b: r.bottom - g.top, cx: (r.left + r.right) / 2 - g.left, cy: (r.top + r.bottom) / 2 - g.top }; };
+  const C = '#6fe7f2', A = '#ffb347';
+  let out = `<defs><marker id="h" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${C}"/></marker><marker id="ha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${A}"/></marker></defs>`;
+  const line = (d, color = C, dash = '') => { out += `<path d="${d}" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ''} marker-end="url(#${color === C ? 'h' : 'ha'})"/>`; };
+  const across = (a, b) => { const A1 = box(a), B1 = box(b); const y = A1.cy; line(A1.r < B1.l ? `M${A1.r + 6} ${y} H${B1.l - 8}` : `M${A1.l - 6} ${y} H${B1.r + 8}`); };
+  across('s1', 's2'); across('s2', 's3'); across('s3', 's4');
+  const s4 = box('s4'), s5 = box('s5');
+  line(`M${s4.cx} ${s4.b + 6} V${s5.t - 8}`);
+  across('s5', 's6'); across('s6', 's7'); across('s7', 's8');
+  // 5 → 3: look and fix
+  const s3 = box('s3');
+  line(`M${s5.l + 40} ${s5.t - 6} C ${s5.l + 40} ${s5.t - 60}, ${s3.cx} ${s3.b + 50}, ${s3.cx} ${s3.b + 8}`, C, '7 8');
+  // 8 → 3: polish pass
+  const s8 = box('s8');
+  line(`M${s8.cx} ${s8.t - 6} C ${s8.cx} ${s8.t - 70}, ${s3.l + 30} ${s3.b + 70}, ${s3.l + 30} ${s3.b + 8}`, A, '7 8');
+  svg.innerHTML = out;
+  const tag = (text, x, y, cls = '') => { const t = document.createElement('div'); t.className = `tag ${cls}`; t.textContent = text; t.style.left = `${x}px`; t.style.top = `${y}px`; grid.append(t); };
+  tag('fix what you see', s3.cx + 70, s3.b + 30);
+  tag('one polish pass', s8.cx - 40, s3.b + 30, 'amber');
+</script>
+</body>
+</html>

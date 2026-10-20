@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; margin-top: 50px; }
+  .steps .card { padding: 28px 28px 30px; display: flex; flex-direction: column; }
+  .head { display: flex; align-items: center; gap: 14px; }
+  .head h3 { margin: 0; font-size: 32px; }
+  .term { margin-top: 20px; border-radius: 14px; background: rgba(5, 7, 12, 0.9); border: 1px solid var(--line); padding: 16px 18px; font: 500 15.5px/1.75 var(--mono); color: var(--soft); white-space: pre; overflow: hidden; }
+  .term.prose { white-space: normal; font: 500 19px/1.5 var(--sans); }
+  .term .p { color: var(--steel); } .term .c { color: var(--cyan); } .term .s { color: var(--bone); }
+  .where { font: 600 14px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--steel); margin-top: 22px; }
+  .card p { font-size: 20px; }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">Quick start</div>
+  <div class="title">Three steps to your first film.</div>
+  <div class="lede">You need Node.js 22 or newer, FFmpeg and Chrome. <span class="code" style="font-size: 22px">thesium doctor</span> checks everything and says how to fix what is missing.</div>
+  <div class="steps">
+    <div class="card">
+      <div class="head"><span class="num">1</span><h3>Install</h3></div>
+      <div class="where">In Claude Code</div>
+<div class="term"><span class="c">/plugin marketplace add GrimNej/Thesium</span>
+<span class="c">/plugin install thesium@thesium</span></div>
+      <div class="where">Or as a command</div>
+<div class="term"><span class="p">$</span> <span class="c">git clone \
+    https://github.com/GrimNej/Thesium</span>
+<span class="p">$</span> <span class="c">cd Thesium &amp;&amp; npm link</span></div>
+    </div>
+    <div class="card lit">
+      <div class="head"><span class="num">2</span><h3>Ask</h3></div>
+      <div class="where">Tell Claude what you want</div>
+<div class="term prose"><span class="s">“Make a 20-second launch film for https://example.com, warm and cinematic, in EffectCraft.”</span></div>
+      <div class="where">Or in one command</div>
+<div class="term"><span class="p">$</span> <span class="c">thesium make \
+    "a 20-second launch film for
+     https://example.com"</span></div>
+      <p>The model plans, builds, checks and masters it on its own.</p>
+    </div>
+    <div class="card">
+      <div class="head"><span class="num">3</span><h3>Watch</h3></div>
+      <div class="where">In the film's folder</div>
+<div class="term"><span class="p">$</span> <span class="c">node thesium.mjs studio</span></div>
+      <p>Play the master, pin notes on the timeline, then press <b>Copy request for the director</b> and paste it back to Claude.</p>
+      <p>Your film is in <span class="code">out/</span>.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

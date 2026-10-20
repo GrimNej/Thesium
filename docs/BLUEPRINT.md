@@ -60,7 +60,8 @@ Engine  = { id, label, summary, guide, detect(), scaffold(ws, m), open(ws, m, op
 Session = { format: 'jpeg' | 'png', parallel,
             frame(t, slot) → Buffer,                     // required
             frames?(times, files) → files,                // optional: a batch in one call
-            sequence?({from, to, fps, dir}) → pattern,    // optional: a native range render
+            sequence?({from, to, fps, dir}) → pattern | video,   // optional: a native range render
+            maxSequenceFps?,                              // optional: the engine's highest rate
             close() }
 ```
 
@@ -144,8 +145,8 @@ everything.
 | --- | --- | --- | --- |
 | `web` | `film/index.html` with `window.render(t)` and `window.ready` | Own CDP client: headless Chrome over `--remote-debugging-pipe`, one browser context per parallel slot, every request outside the loopback server blocked, fonts awaited, two animation frames per render | `window.THESIUM` injected into the page |
 | `effectcraft` | `film/build.jsx`, an AE-style script | Writes a wrapper (`THESIUM` facts, the kit, the film, a report) at the film root, runs `effectcraft-cli script` headless into a hashed `.ecproj` (rebuilt only when inputs change), verifies the comp and every text layer's font, renders frames in batches (`run … comp.saveFrameAs ×N`) and ranges as PNG sequences | `THESIUM.params`, `T.params` |
-| `remotion` | a Remotion project in `film/remotion` | The project's own CLI: `remotion bundle` once per source state (hashed), then `remotion still` from the bundle (two at a time) and `render --sequence` | the `thesium` input prop |
-| `hyperframes` | a HyperFrames project in `film/hyperframes` | `hyperframes snapshot --at` and `render --format png-sequence` | `thesium-params.js` (rewritten per render) |
+| `remotion` | a Remotion project in `film/remotion` | The project's own CLI: `remotion bundle` once per source state (hashed), then `remotion still` from the bundle (two at a time) and `render --sequence` as JPEG; motion-blur sub-frames by raising the composition's rate through `thesium.renderFps` | the `thesium` input prop |
+| `hyperframes` | a HyperFrames project in `film/hyperframes` | `hyperframes snapshot --at` for stills; `render --format mp4 --crf 8` at the sub-frame rate for masters (one near-lossless video, since 7,200 PNG sub-frames would need ~60 GB); `hyperframes check` inside `thesium check` | `thesium-params.js` (rewritten per render) |
 | `command` | anything | Shell templates for `frame`, optionally `sequence` and `build` | a JSON file at `{params}` |
 
 Adding an engine is one file implementing the contract plus one guide in `knowledge/engines/`.
@@ -168,8 +169,15 @@ dependencies. So Thesium supports it from the outside: any harness that writes a
 - **Strips** tile N consecutive frames with time labels (FFmpeg `drawtext` with a bundled mono font).
 - **Videos**: a native sequence when the engine has one (EffectCraft, Remotion, HyperFrames,
   command), else parallel capture into per-slot x264 segments joined with the concat demuxer.
-  Sub-frame samples are averaged with `tmix` and decimated with `select`. Output is always
-  limited-range BT.709 `yuv420p` with colour tags and `+faststart`, whatever the engine.
+  Output is always limited-range BT.709 `yuv420p` with colour tags and `+faststart`.
+- **Motion blur on native sequences** matches the per-frame path: the engine renders an even grid
+  of `samples ÷ shutter` sub-frames per frame (capped by `maxSequenceFps`), and each output frame
+  averages, with `tmix` and `select`, only the sub-frames inside its shutter, centred on its time.
+  An earlier version averaged a full frame interval starting at the frame (a 360° shutter, half a
+  frame late); the parity sheet caught it as ghosted readouts, and a test now draws a frame-locked
+  box and fails if it doubles.
+- **Disk**: before a native image sequence Thesium estimates its size and stops with a clear
+  message when the temporary drive is too small, rather than failing mid-render.
 - **Previews** render at half scale (device scale factor on the web, `--resolution` on EffectCraft)
   with a fast encode, a one-per-second sheet, a phone sheet and the frame check.
 
@@ -214,7 +222,7 @@ pictures.
 | Gate | When | What it catches |
 | --- | --- | --- |
 | Manifest validation | every command | wrong engine, odd sizes, bad params, bad gains |
-| Engine lint | `check` | wall clocks, timers, unseeded randomness, remote URLs, CSS animation, engine-specific mistakes (PostScript font names, absolute paths) |
+| Engine lint | `check` | wall clocks, timers, unseeded randomness, remote URLs, CSS animation, engine-specific mistakes (absolute paths, HyperFrames runtime errors) |
 | EffectCraft build report | every build | comp missing or mis-sized, fps or duration mismatch, fonts that would silently fall back |
 | Language check | `check` | on-screen text in a script the brief is not written in |
 | Determinism | `check` | frames that change when rendered in a different order |
@@ -291,13 +299,16 @@ On a 12-thread Windows 10 machine (CPU rendering):
 | EffectCraft: 7 full-resolution stills of the showcase film | ~6 s |
 | EffectCraft: 30 s preview of the showcase film at half scale | 120 s |
 | EffectCraft: 30 s 1080p master of the showcase film (fractal fog, glows, 3D, 60 expression particles) | 527 s |
-| Test suite (17 tests: end-to-end web, command, EffectCraft and Remotion films (Remotion opt-in), narration, MCP, QR) | ~8 s; ~25 s with Remotion; CI on Linux (Node 22 and 24) ~50 s a job |
+| Test suite (19 tests: end-to-end web, command, EffectCraft and Remotion films (Remotion opt-in), motion-blurred native sequences, narration, MCP, QR) | ~8 s; ~25 s with Remotion; CI on Linux (Node 22 and 24) ~50 s a job |
 | Web: the showcase film's 30 s master with 4 motion-blur samples (3,600 renders) | 145 s |
 | Web: the showcase film's 30 s master with 8 motion-blur samples (7,200 renders: WebGL fog, CSS 3D, SVG filters) | ~250 s |
 | Remotion 4.0.537: 3 stills of a 720p film, first bundle / bundle reused | 9.5 s / 5.3 s (41 s before bundling once) |
 | Remotion: 3 s preview at half scale | 5.9 s |
 | Narration: 6 lines spoken by Kokoro on the CPU, placed, levelled, transcribed and checked (Whisper small) | ~14 s; a changed line alone ~8 s |
 | Narrated film: 24 s 1080p web master with narration QA (balance and a transcription of the mix) | 61 s |
+| Launch film, 30 s 1080p, 8 motion-blur samples: HyperFrames master (240 fps native video) | 765 s |
+| Launch film, same: Remotion master (14,400 sub-frames at 480 fps) | 1,737 s |
+| `thesium make`: a 12 s promo from a public website, critic review and polish pass included | about 43 min of director time |
 
 ## 15. EffectCraft: what testing on it taught us
 
@@ -306,16 +317,18 @@ is capable and fast, and it is young. Thesium absorbs its gaps so films do not s
 
 | Finding | What Thesium does |
 | --- | --- |
-| Variable fonts render at their default instance whatever weight is asked | Ships fixed-weight instances in `fonts/static/` and points `EFFECTCRAFT_FONT_DIRS` at them |
-| PostScript font names fall back to Inter silently | The build fails when a text layer's family/style does not resolve; lint warns on PostScript names |
+| A variable font's style does not set its weight | Ships fixed-weight instances in `fonts/static/` and points `EFFECTCRAFT_FONT_DIRS` at them |
+| A missing font family renders in Inter with no warning | The build fails when a text layer's family/style does not resolve (PostScript names like `Unbounded-Black` are accepted, since EffectCraft resolves them) |
 | Point text anchors at the baseline | The kit centres text on its glyph bounds by default |
 | Scripts may only read their own folder | The build wrapper lives at the film root, with an absolute path |
 | `render --progress` is not in 0.11.1 | Progress counts written frames |
 | The renderer already uses every core | One native render per range; previews at half resolution (3.7× faster) |
 | Point parameters are pixels although defaults look normalised | Documented; the kit passes pixels |
-| `CC Particle World`, `CC Light Rays`, `CC Star Burst` and `Echo` on shape layers render nothing useful | The guide lists them under "avoid" with tested alternatives (expression particles, Echo on precomps) |
+| `Echo` on a shape layer leaves no trail | The guide says to precompose the shape first |
 
-These are worth reporting upstream (with the owner's approval).
+The upstream reports are written with minimal repro scripts in `docs/upstream/effectcraft/` and wait
+for the owner's go-ahead. Re-testing in isolation also cleared three effects an earlier note had
+listed as broken (CC Particle World, CC Star Burst, CC Light Rays): they work.
 
 ## 16. What Thesium keeps from Vmotion, and what it drops
 
@@ -335,24 +348,29 @@ sharp, and runtime dependencies on Remotion and HyperFrames.
   rendering; private-network addresses refused), scrolls so lazy images load, and saves a viewport
   screenshot, a full-page screenshot, the text (headings, paragraphs, links), brand cues (fonts,
   most-used colours, the primary button) and the page's images, with provenance rows in
-  `assets/SOURCES.md`.
+  `assets/SOURCES.md`. Each page gets its own folder (`ffmpeg.org`, `ffmpeg.org-about`), so
+  several pages of one site can be captured.
 - `qr "<url>"` writes a real code (Project Nayuki's MIT generator, vendored) as PNG or SVG in any
   colours, with the quiet zone; verified with an independent decoder.
 - `make "<request>"` creates the film folder and runs Claude Code headless in it with
   `--plugin-dir` pointing at this install, so the session has the skill, the critic and the MCP
   server; edits inside the folder and `node thesium.mjs` commands are pre-approved, progress streams
-  to the terminal.
+  to the terminal. The prompt goes in on stdin (npm installs Claude Code as `claude.cmd` on Windows,
+  which only runs through a shell that would split a multi-line argument). A session that stops
+  (a usage limit, a closed terminal) resumes with `make --continue --folder <film>`, which continues
+  the director's own conversation in that folder.
 
 ## 18. Roadmap
 
-Done since the first draft: narration with a hearing check (section 8), CI on Linux with Node 22
-and 24, Remotion bundled once per source state, and a narrated example (`examples/thesium-voice`).
+Done for 1.0: narration with a hearing check measured across languages, the launch film on all
+four engines with masters that pass QA, motion blur matching on native sequences, CI on Linux,
+Windows and macOS, `make --continue`, a visual guide, and the EffectCraft findings re-verified.
 
-1. Engine parity benchmark: the same brief on every engine, scored by the critic, published
-   (EffectCraft and web done: `examples/thesium-launch`, `examples/thesium-launch-web`; Remotion
-   and HyperFrames next).
-2. EffectCraft: re-test the "avoid" list on each release (0.11.1 is still the latest); use
-   `--progress` when it exists.
-3. macOS and Windows CI runners (Linux runs today; the suite passes on Windows locally).
-4. Narration beyond English: Kokoro has Spanish, French, Hindi, Italian, Japanese, Portuguese and
-   Mandarin voices; measure them with the hearing check before recommending them.
+Ideas for after 1.0, none of them needed for what Thesium does today:
+
+1. File the drafted EffectCraft reports once the owner agrees; re-run `repro.mjs` on each
+   EffectCraft release and drop workarounds that are no longer needed.
+2. Native-voice providers for Hindi, Japanese and Mandarin narration (Kokoro through kokoro-onnx
+   does not pronounce them; a command-line TTS with native models would).
+3. A critic score published per engine for the parity film, so engine parity is measured by
+   judgement as well as by pixels.

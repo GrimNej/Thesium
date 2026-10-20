@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .layout { display: grid; grid-template-columns: 1040px 1fr; gap: 40px; margin-top: 46px; align-items: start; }
+  .shot { position: relative; width: 1040px; height: 585px; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.10); }
+  .shot img { width: 1040px; display: block; }
+  .pin { position: absolute; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font: 700 19px/1 var(--mono); color: var(--ink); background: var(--cyan); box-shadow: 0 0 0 4px rgba(5, 7, 12, 0.55), 0 6px 18px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
+  .legend { display: grid; gap: 15px; }
+  .item { display: grid; grid-template-columns: 38px 1fr; gap: 14px; align-items: start; }
+  .item .pin { position: static; transform: none; width: 34px; height: 34px; font-size: 17px; box-shadow: none; }
+  .item b { display: block; font: 700 21px/1.2 var(--sans); color: var(--bone); }
+  .item span { font: 400 18px/1.35 var(--sans); color: var(--soft); }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">The review studio</div>
+  <div class="title">Watch, comment, tune. Then hand it back.</div>
+  <div class="lede">Run <span class="code" style="font-size: 22px">node thesium.mjs studio</span> in a film's folder. It opens in your browser and only works on your computer.</div>
+  <div class="layout">
+    <div class="shot">
+      <img src="frames/studio.png">
+      <div class="pin" style="left: 52px; top: 76px">1</div>
+      <div class="pin" style="left: 836px; top: 20px">2</div>
+      <div class="pin" style="left: 262px; top: 528px">3</div>
+      <div class="pin" style="left: 690px; top: 568px">4</div>
+      <div class="pin" style="left: 702px; top: 502px">5</div>
+      <div class="pin" style="left: 1016px; top: 65px">6</div>
+      <div class="pin" style="left: 978px; top: 226px">7</div>
+      <div class="pin" style="left: 1016px; top: 273px">8</div>
+    </div>
+    <div class="legend">
+      <div class="item"><div class="pin">1</div><div><b>The film</b><span>Any version, frame by frame.</span></div></div>
+      <div class="item"><div class="pin">2</div><div><b>Versions and renders</b><span>Switch versions; ask for a new preview or master.</span></div></div>
+      <div class="item"><div class="pin">3</div><div><b>Sections</b><span>The film's beats, from its plan.</span></div></div>
+      <div class="item"><div class="pin">4</div><div><b>Timeline</b><span>Click to seek. Yellow dots are notes.</span></div></div>
+      <div class="item"><div class="pin">5</div><div><b>Add a note</b><span>Or press N: the note keeps this exact frame.</span></div></div>
+      <div class="item"><div class="pin">6</div><div><b>Notes</b><span>Each with its time and frame; mark done or delete.</span></div></div>
+      <div class="item"><div class="pin">7</div><div><b>Hand it back</b><span>One request for the model with every open note.</span></div></div>
+      <div class="item"><div class="pin">8</div><div><b>Status</b><span>Where the film stands and what comes next.</span></div></div>
+    </div>
+  </div>
+  <div class="foot">Films that expose settings (a colour, a headline) also get a Tune panel: change a value and see the real frame redrawn.</div>
+</div>
+</body>
+</html>

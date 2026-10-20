@@ -1,7 +1,7 @@
 {
   "name": "thesium",
   "displayName": "Thesium",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "An engine-agnostic motion studio: the model directs, animates and scores films in code on web, EffectCraft, Remotion, HyperFrames or any CLI renderer, sees its own frames, and masters a finished video.",
   "author": { "name": "GrimNej", "url": "https://github.com/GrimNej" },
   "homepage": "https://github.com/GrimNej/Thesium",

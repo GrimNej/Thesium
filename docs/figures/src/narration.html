@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 58px; margin-top: 52px; position: relative; }
+  .flow .card { min-height: 560px; display: flex; flex-direction: column; }
+  .step { font: 600 17px/1 var(--mono); letter-spacing: 0.16em; color: var(--steel); text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+  .card h3 { margin-top: 18px; }
+  .card p { font-size: 20px; }
+  pre { margin: 18px 0 0; padding: 16px; border-radius: 12px; background: var(--ink); border: 1px solid var(--line); font: 500 15px/1.6 var(--mono); color: var(--soft); white-space: pre-wrap; }
+  pre .k { color: var(--cyan); } pre .s { color: var(--bone); } pre .n { color: var(--amber); }
+  canvas { display: block; width: 100%; margin-top: 18px; border-radius: 12px; background: var(--ink); border: 1px solid var(--line); }
+  .words { margin-top: 16px; display: grid; gap: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 30px 1fr; align-items: center; gap: 8px; font: 500 17px/1.2 var(--mono); }
+  .pair .a { color: var(--bone); text-align: right; } .pair .b { color: var(--cyan); }
+  .pair .ok { color: var(--green); text-align: center; font-weight: 700; } .pair .no { color: var(--warm); text-align: center; font-weight: 700; }
+  .pair.miss .b { color: var(--warm); text-decoration: line-through; }
+  .ipa { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(111, 231, 242, 0.07); border: 1px dashed rgba(111, 231, 242, 0.35); font: 500 17px/1.45 var(--sans); color: var(--soft); }
+  .ipa b { display: inline-block; margin: 8px 0; font: 700 26px/1 var(--mono); color: var(--cyan); white-space: nowrap; }
+  .stat { margin-top: auto; padding-top: 16px; display: grid; gap: 8px; }
+  .stat div { display: flex; flex-direction: column; gap: 6px; font: 500 16px/1.2 var(--mono); color: var(--steel); }
+  .stat b { font: 700 30px/1 var(--mono); color: var(--cyan); }
+  .arrow { position: absolute; top: 250px; width: 58px; height: 40px; }
+  .arrow svg { width: 100%; height: 100%; overflow: visible; }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">Narration</div>
+  <div class="title">A voice the model can't hear, checked word by word.</div>
+  <div class="lede">Thesium speaks the script locally, writes down what it hears, and keeps the music out of the way. One command: <span class="code" style="font-size: 22px">node thesium.mjs sound voice</span></div>
+
+  <div class="flow">
+    <div class="card">
+      <div class="step"><span class="num">1</span>Script</div>
+      <h3>Timed lines</h3>
+      <p>Write what is said and when, in <span class="code">audio/voice.json</span>.</p>
+<pre>{ <span class="k">"voice"</span>: <span class="s">"af_heart"</span>,
+  <span class="k">"lines"</span>: [
+    { <span class="k">"t"</span>: <span class="n">4.8</span>,
+      <span class="k">"text"</span>: <span class="s">"So Thesium
+      writes down what
+      was said…"</span> } ] }</pre>
+      <p style="margin-top: auto; padding-top: 14px">Or a recorded take: <span class="code">"file": "assets/vo.wav"</span></p>
+    </div>
+    <div class="card">
+      <div class="step"><span class="num">2</span>Voice</div>
+      <h3>Spoken locally</h3>
+      <p>Kokoro on your computer, or the system voice, or any text-to-speech tool. Each line lands at its time.</p>
+      <canvas id="voice" width="528" height="300"></canvas>
+      <p style="margin-top: auto; padding-top: 14px">Line timings come back, so captions and cuts land on the words.</p>
+    </div>
+    <div class="card lit">
+      <div class="step"><span class="num">3</span>Hearing check</div>
+      <h3>Written down, compared</h3>
+      <p>Whisper transcribes the voice; every word is matched to the script.</p>
+      <div class="words">
+        <div class="pair"><span class="a">every</span><span class="ok">✓</span><span class="b">every</span></div>
+        <div class="pair"><span class="a">word</span><span class="ok">✓</span><span class="b">word</span></div>
+        <div class="pair miss"><span class="a">Thesium</span><span class="no">≠</span><span class="b">These</span></div>
+      </div>
+      <div class="ipa">A misheard word shows how it was spoken:<br><b>/θˈiːziəm/</b><br>Right? Keep it. Wrong? Respell it in <span class="code">"say"</span>.</div>
+    </div>
+    <div class="card">
+      <div class="step"><span class="num">4</span>Mix and QA</div>
+      <h3>Music steps aside</h3>
+      <p>The music dips under each phrase, just enough for the voice to sit clearly above it.</p>
+      <canvas id="mix" width="528" height="300"></canvas>
+      <div class="stat">
+        <div>voice above the music<b>10 LU</b></div>
+        <div>words heard in the mix<b>54 / 54</b></div>
+      </div>
+    </div>
+    <div class="arrow" style="left: calc(25% - 50px)"><svg viewBox="0 0 58 40"><path d="M6 20 H48 M38 10 L50 20 L38 30" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="arrow" style="left: calc(50% - 29px)"><svg viewBox="0 0 58 40"><path d="M6 20 H48 M38 10 L50 20 L38 30" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="arrow" style="left: calc(75% - 7px)"><svg viewBox="0 0 58 40"><path d="M6 20 H48 M38 10 L50 20 L38 30" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  </div>
+  <div class="foot">Real data from examples/thesium-voice: its narration, its music, the dip Thesium chose (11.2 dB) and its master's QA.</div>
+</div>
+<script>
+  // The waveforms are the narrated example's own envelopes (assets/hearing.json).
+  window.figureReady = document.fonts.load('600 24px "JetBrains Mono"').then(() => fetch('/examples/thesium-voice/assets/hearing.json')).then((r) => r.json()).then((d) => {
+    const env = (arr, t) => arr[Math.max(0, Math.min(arr.length - 1, Math.round(t * d.rate)))];
+    const bars = (ctx, arr, t0, t1, y, half, color, gamma, alpha = 1, ghost) => {
+      const W = ctx.canvas.width, n = 70;
+      for (let i = 0; i < n; i++) {
+        const t = t0 + ((i + 0.5) / n) * (t1 - t0);
+        const h = Math.max(1.5, half * Math.min(1, Math.max(0, (env(arr, t) - 0.3) / 0.48)) ** gamma);
+        const x = 18 + (i / n) * (W - 36);
+        ctx.globalAlpha = alpha; ctx.fillStyle = color;
+        ctx.beginPath(); ctx.roundRect(x, y - h, 4, h * 2, 2); ctx.fill();
+        if (ghost) {
+          const g = Math.max(1.5, half * Math.min(1, Math.max(0, (env(ghost, t) - 0.3) / 0.48)) ** gamma);
+          if (g > h + 2) { ctx.globalAlpha = 0.45; ctx.fillRect(x, y - g, 4, 2); ctx.fillRect(x, y + g - 2, 4, 2); }
+        }
+      }
+      ctx.globalAlpha = 1;
+    };
+    const label = (ctx, text, x, y, color) => { ctx.font = '600 24px JetBrains Mono'; ctx.fillStyle = color; ctx.fillText(text, x, y); };
+    const v = document.getElementById('voice').getContext('2d');
+    bars(v, d.voice, 4.4, 9.2, 150, 90, '#f3efe6', 1.3);
+    // line boundaries
+    for (const l of d.lines.filter((l) => l.t >= 4.4 && l.t < 9.2)) {
+      const x = 18 + ((l.t - 4.4) / 4.8) * (v.canvas.width - 36);
+      v.fillStyle = '#6fe7f2'; v.fillRect(x - 1.5, 12, 3, 250);
+      label(v, `${l.t.toFixed(1)} s`, x > v.canvas.width - 100 ? x - 80 : x + 8, 34, '#6fe7f2');
+    }
+    label(v, 'audio/voice.wav', 18, 288, '#8a93a3');
+    const m = document.getElementById('mix').getContext('2d');
+    bars(m, d.ducked, 15.0, 19.8, 92, 58, '#6fe7f2', 2, 1, d.music);
+    bars(m, d.voice, 15.0, 19.8, 228, 56, '#f3efe6', 1.3);
+    label(m, 'music', 18, 28, '#8a93a3');
+    label(m, 'voice', 18, 166, '#8a93a3');
+  });
+</script>
+</body>
+</html>

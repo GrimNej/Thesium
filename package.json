@@ -1,6 +1,6 @@
 {
   "name": "thesium",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "An engine-agnostic motion studio for frontier models: the model directs, Thesium lets it see, hear, check and master its film on any renderer.",
   "type": "module",
   "license": "MIT",
@@ -32,7 +32,8 @@
     "skills",
     "agents",
     ".claude-plugin",
-    "docs"
+    "docs/GUIDE.md",
+    "docs/BLUEPRINT.md"
   ],
   "engines": {
     "node": ">=22.12"

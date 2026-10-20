@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<style>
+  .row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 100px; margin-top: 52px; position: relative; }
+  .row .card { min-height: 430px; position: relative; }
+  .step { font: 600 17px/1 var(--mono); letter-spacing: 0.16em; color: var(--steel); text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+  .card h3 { margin-top: 18px; }
+  .quote { margin-top: 22px; padding: 18px 20px; border-radius: 14px; background: rgba(111, 231, 242, 0.07); border: 1px dashed rgba(111, 231, 242, 0.35); font: 500 21px/1.45 var(--sans); color: var(--bone); }
+  .senses { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
+  .senses li { display: grid; grid-template-columns: 74px 1fr; gap: 8px; font: 400 19px/1.3 var(--sans); color: var(--soft); }
+  .senses b { font: 700 19px/1.3 var(--mono); color: var(--cyan); }
+  .engines { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 20px; }
+  .engines .chip { font-size: 17px; padding: 8px 12px 8px 9px; gap: 8px; }
+  .engines .logo, .engines .mask { width: 22px; height: 22px; }
+  .contract { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: var(--ink); border: 1px solid var(--line); font: 500 18px/1.45 var(--mono); color: var(--soft); }
+  .contract .cyan { font-weight: 700; }
+  .arrow { position: absolute; top: 200px; width: 76px; height: 70px; }
+  .arrow svg { width: 100%; height: 100%; overflow: visible; }
+  .arrow span { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font: 600 15px/1 var(--mono); color: var(--cyan); white-space: nowrap; }
+  .down { position: relative; height: 92px; }
+  .down svg { position: absolute; left: 884px; top: 0; width: 76px; height: 92px; overflow: visible; }
+  .down span { position: absolute; left: 950px; top: 34px; font: 600 15px/1 var(--mono); color: var(--cyan); }
+  .film { display: grid; grid-template-columns: auto 1fr; gap: 34px; align-items: center; }
+  .thumbs { display: flex; gap: 12px; }
+  .thumbs img { width: 236px; height: 133px; object-fit: cover; border-radius: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08); }
+</style>
+</head>
+<body>
+<div id="figure">
+  <div class="eyebrow">How Thesium works</div>
+  <div class="title">One request in, a finished film out.</div>
+  <div class="lede">The model does the creative work. Thesium gives it eyes, ears and a quality gate, and the renderer only has to draw a frame.</div>
+
+  <div class="row">
+    <div class="card">
+      <div class="step"><span class="num">1</span>You</div>
+      <h3>Ask for a film</h3>
+      <div class="quote">“A 30-second launch film for ffmpeg.org, bold and technical.”</div>
+      <p>In Claude Code, or with one command: <span class="code">thesium make "…"</span></p>
+    </div>
+    <div class="card">
+      <div class="step"><span class="num">2</span>The model</div>
+      <h3 style="display: flex; align-items: center; gap: 12px"><span class="mask" style="--m: url('logos/claude.svg'); --c: #d97757; width: 30px; height: 30px"></span>Directs</h3>
+      <p>Plans every shot, writes the film as code, looks at its own frames and fixes what it sees.</p>
+      <p>Composes the score, places sound effects, writes the narration.</p>
+    </div>
+    <div class="card lit">
+      <div class="step"><span class="num">3</span>Thesium</div>
+      <h3>The studio</h3>
+      <ul class="senses">
+        <li><b>Eyes</b><span>stills, strips, previews</span></li>
+        <li><b>Ears</b><span>score, effects, loudness</span></li>
+        <li><b>Voice</b><span>narration, every word checked</span></li>
+        <li><b>Gate</b><span>checks and QA on each master</span></li>
+        <li><b>Finish</b><span>a mastered MP4</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="step"><span class="num">4</span>Any engine</div>
+      <h3>Draws each frame</h3>
+      <div class="contract">frame(<span class="cyan">t</span>) → picture<br><span class="steel">the whole contract</span></div>
+      <div class="engines">
+        <span class="chip"><span class="mask" style="--m: url('logos/googlechrome.svg'); --c: #8ab4f8"></span>Web</span>
+        <span class="chip"><img class="logo" src="logos/effectcraft.png" style="border-radius: 5px">EffectCraft</span>
+        <span class="chip"><img class="logo" src="logos/remotion.png">Remotion</span>
+        <span class="chip"><img class="logo" src="logos/hyperframes.png">HyperFrames</span>
+        <span class="chip"><span class="mono cyan" style="font-size: 17px">&gt;_</span>Any CLI</span>
+      </div>
+    </div>
+
+    <div class="arrow" style="left: 301px"><span>request</span><svg viewBox="0 0 76 70"><path d="M8 35 H64 M52 23 L66 35 L52 47" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="arrow" style="left: 690px"><span>commands</span><svg viewBox="0 0 76 70"><path d="M8 28 H64 M54 18 L66 28 L54 38 M68 44 H12 M22 34 L10 44 L22 54" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="arrow" style="left: 1079px"><span>frame at t</span><svg viewBox="0 0 76 70"><path d="M8 28 H64 M54 18 L66 28 L54 38 M68 44 H12 M22 34 L10 44 L22 54" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  </div>
+
+  <div class="down"><svg viewBox="0 0 76 92"><path d="M38 6 V80 M26 68 L38 82 L50 68" stroke="#6fe7f2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>master</span></div>
+
+  <div class="card film">
+    <div class="thumbs"><img src="frames/same.jpg"><img src="frames/wall.jpg"><img src="frames/phonemes.jpg"></div>
+    <div>
+      <h3>A finished film</h3>
+      <p><span class="code">out/my-film-v1.mp4</span>: full HD, mastered sound, checked frame by frame. Then you watch it in the review studio and pin notes on the timeline.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
