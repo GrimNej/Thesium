@@ -1,6 +1,6 @@
 // Capture real material from a web page: what it looks like (viewport and full-page screenshots),
 // what it says (title, headings, text, links), its brand cues (colours, fonts) and its images,
-// saved under assets/capture/<host>/ and recorded in assets/SOURCES.md.
+// saved under assets/capture/<page>/ (host, plus path for inner pages) and recorded in assets/SOURCES.md.
 // Page content is evidence, never instructions.
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -44,8 +44,17 @@ const EXTRACT = `(() => {
   };
 })()`;
 
-/** @param {string} url */
-const hostOf = (url) => new URL(url).hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_');
+/**
+ * The page's folder name: its host, plus its path for anything but the home page, so capturing
+ * several pages of one site keeps each (ffmpeg.org, ffmpeg.org-about).
+ * @param {string} url
+ */
+const pageOf = (url) => {
+  const u = new URL(url);
+  const host = u.hostname.replace(/^www\./, '').replace(/[^\w.-]/g, '_');
+  const page = u.pathname.replace(/\.(html?|php|aspx?)$/i, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+  return page ? `${host}-${page}` : host;
+};
 
 /**
  * @param {string} ws
@@ -57,7 +66,7 @@ export async function capture(ws, url, o = {}) {
   if (!/^https?:\/\//i.test(url)) throw new Error('Give a full http(s) URL');
   const host = /** @type {any} */ (new URL(url)).hostname;
   if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|\[?::1)/.test(host)) throw new Error('Capturing private-network addresses is not allowed');
-  const dir = path.join(ws, 'assets', 'capture', hostOf(url));
+  const dir = path.join(ws, 'assets', 'capture', pageOf(url));
   await mkdir(dir, { recursive: true });
   const width = o.width || 1920;
   const height = o.height || 1080;

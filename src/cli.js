@@ -13,6 +13,8 @@ const HELP = `thesium: an engine-agnostic motion studio for frontier models
 Film
   make "<request>" [--engine …] [--size …] [--duration 30] [--folder name] [--model …] [--dry-run]
                                  one command: a film folder, then a headless director session (Claude Code)
+  make --continue --folder <name>
+                                 resume a director session that stopped (a usage limit, a closed terminal)
   new <folder> [--engine web|effectcraft|remotion|hyperframes|command] [--size 16:9|9:16|1:1|WxH]
                [--fps 30] [--duration 15] [--title "…"] [--brief "…"] [--language en]
   status                         where the film stands and what to do next
@@ -29,7 +31,7 @@ Look
   check [--fast]                 contract, engine rules, language and determinism → PASS/FAIL
   frames <video> [--fps 30] [--key green] [--width px]
                                  frame-accurate (optionally keyed) sequence → assets/frames/<name>/
-  capture <url> [--images 24]    screenshots, text, brand cues and images of a page → assets/capture/<host>/
+  capture <url> [--images 24]    screenshots, text, brand cues and images of a page → assets/capture/<page>/
   qr "<url>" [--out assets/qr.png|.svg] [--size 600] [--dark #000] [--light #fff]
                                  a real, scannable QR code for a call to action
 
@@ -88,7 +90,7 @@ function parse(argv) {
   return { positional, flags, params };
 }
 
-const BOOLEAN = new Set(['phone', 'sharp', 'blur', 'draft', 'fast', 'no-open', 'json', 'help', 'dry-run']);
+const BOOLEAN = new Set(['phone', 'sharp', 'blur', 'draft', 'fast', 'no-open', 'json', 'help', 'dry-run', 'continue']);
 
 /** @param {string | boolean | undefined} v @param {number} [fallback] */
 const num = (v, fallback) => (v === undefined || v === true ? fallback : Number(v));
@@ -131,6 +133,7 @@ export async function main(argv) {
           model: typeof flags.model === 'string' ? flags.model : undefined,
           permissionMode: typeof flags['permission-mode'] === 'string' ? flags['permission-mode'] : undefined,
           dryRun: Boolean(flags['dry-run']),
+          resume: Boolean(flags.continue),
           cwd: typeof flags.workspace === 'string' ? flags.workspace : undefined,
         });
       }

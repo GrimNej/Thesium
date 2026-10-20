@@ -161,7 +161,10 @@ async function synthesise(ws, provider, spec, todo, log) {
   }
 }
 
-/** Lower-case words without punctuation or accents. @param {string} s */
+/** Scripts written without spaces between words: compared character by character. */
+const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}]/u;
+
+/** Lower-case words without punctuation or accents (single characters for Chinese, Japanese, Thai). @param {string} s */
 export const words = (s) =>
   s
     .toLowerCase()
@@ -169,7 +172,8 @@ export const words = (s) =>
     .replace(/\p{M}/gu, '')
     .split(/[^\p{L}\p{N}']+/u)
     .map((w) => w.replace(/^'+|'+$/g, ''))
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap((w) => (UNSPACED.test(w) ? [...w] : [w]));
 
 /** @param {string} a @param {string} b */
 function similarity(a, b) {
@@ -363,7 +367,9 @@ export async function voice(ws, args, o = {}) {
     if (l.end > d) warnings.push(`Line at ${l.t} s ends at ${l.end.toFixed(2)} s, after the film ends (${d} s)`);
     const n = l.text ? words(l.text).length : 0;
     const seconds = l.end - l.t;
-    if (n && seconds > 0 && n / seconds > 3.4) warnings.push(`Line at ${l.t} s is fast (${(n / seconds).toFixed(1)} words/s): cut words or lower its speed`);
+    // Words a second, or characters for Chinese and Japanese, which are counted one by one.
+    const [limit, unit] = l.text && UNSPACED.test(l.text) ? [7, 'characters'] : [3.4, 'words'];
+    if (n && seconds > 0 && n / seconds > limit) warnings.push(`Line at ${l.t} s is fast (${(n / seconds).toFixed(1)} ${unit}/s): cut words or lower its speed`);
   }
   const report = [
     `${rel(ws, out)}: ${takes.length} line${takes.length === 1 ? '' : 's'} (${todo.length} spoken now, ${takes.length - todo.length} cached or recorded), levelled to ${VOICE_LUFS} LUFS`,
