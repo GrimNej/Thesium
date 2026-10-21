@@ -4,7 +4,7 @@ Thesium runs this for you (`thesium sound voice`) and passes model paths and job
 
     python voice.py kokoro <model.onnx> <voices.bin> <jobs.json>   synthesise lines, one model load
     python voice.py voices <model.onnx> <voices.bin>                list the voice ids
-    python voice.py hear <audio> <out.json> [model] [language] [hotwords]   transcribe with word times
+    python voice.py hear <audio.wav> <out.json> [model] [language] [hotwords]   transcribe with word times
     python voice.py phonemes <model.onnx> <voices.bin> <lang> <words…>      how Kokoro says words
 
 Kokoro-82M (Apache-2.0) runs on the CPU through kokoro-onnx (MIT); faster-whisper (MIT) runs
@@ -60,12 +60,21 @@ def phonemes(model, voices_file, lang, *words):
     print(json.dumps({w: tts.tokenizer.phonemize(w, lang) for w in words}, ensure_ascii=False))
 
 
+def read_wav16k(path):
+    """Samples of the 16 kHz mono 16-bit WAV Thesium decodes for Whisper, as float32 in [-1, 1].
+    Whisper gets samples rather than a file, so faster-whisper never decodes with PyAV."""
+    with wave.open(path, "rb") as w:
+        if (w.getframerate(), w.getnchannels(), w.getsampwidth()) != (16000, 1, 2):
+            raise ValueError(f"{path}: expected a 16 kHz mono 16-bit WAV")
+        return np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float32) / 32768.0
+
+
 def hear(audio, out, model="small", language=None, hotwords=None):
     from faster_whisper import WhisperModel
 
     whisper = WhisperModel(model, device="cpu", compute_type="int8")
     segments, info = whisper.transcribe(
-        audio,
+        read_wav16k(audio),
         language=language or None,
         word_timestamps=True,
         beam_size=5,

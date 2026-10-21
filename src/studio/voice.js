@@ -246,10 +246,15 @@ export async function hearLines(ws, audio, lines, o = {}) {
   const spoken = lines.filter((l) => l.text && words(l.text).length);
   if (!spoken.length) return undefined;
   const model = process.env.THESIUM_WHISPER || 'small';
+  // Whisper hears 16 kHz mono. FFmpeg decodes it here, so the check never depends on PyAV, whose
+  // 19.0 broke faster-whisper's own decoder.
+  const scratch = path.join(ws, '.thesium', 'voice');
+  const wav = path.join(scratch, `heard-${process.pid}.wav`);
+  await mkdir(scratch, { recursive: true });
+  await ff(['-i', audio, '-vn', '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', wav]);
   const transcribe = async (hotwords = '') => {
-    const out = path.join(ws, '.thesium', 'voice', `heard-${process.pid}.json`);
-    await mkdir(path.dirname(out), { recursive: true });
-    await py(ws, [path.join(ws, 'kit', 'audio', 'voice.py'), 'hear', audio, out, model, (o.language || '').slice(0, 2), hotwords], { signal: o.signal });
+    const out = path.join(scratch, `heard-${process.pid}.json`);
+    await py(ws, [path.join(ws, 'kit', 'audio', 'voice.py'), 'hear', wav, out, model, (o.language || '').slice(0, 2), hotwords], { signal: o.signal });
     const transcript = JSON.parse(await readFile(out, 'utf8'));
     await rm(out, { force: true });
     // Each heard word belongs to the nearest line (Whisper's first word is often stamped early).
@@ -269,18 +274,22 @@ export async function hearLines(ws, audio, lines, o = {}) {
       return { t: l.t, text: /** @type {string} */ (l.text), heard, ...compareWords(words(/** @type {string} */ (l.text)), words(heard)) };
     });
   };
-  let report = await transcribe();
-  const capitalised = new Set(spoken.flatMap((l) => /** @type {string} */ (l.text).split(/\s+/).filter((w) => /^\p{Lu}/u.test(w)).flatMap(words)));
-  const names = [...new Set(report.flatMap((l) => [...l.missed, ...l.near.map((n) => n[0])]).filter((w) => capitalised.has(w)))];
-  if (names.length) {
-    const original = new Map(spoken.flatMap((l) => /** @type {string} */ (l.text).split(/\s+/)).map((w) => [words(w)[0], w.replace(/[^\p{L}\p{N}'-]/gu, '')]));
-    const second = await transcribe(names.map((n) => original.get(n) || n).join(' '));
-    report = report.map((l, i) => ({ ...l, ...eitherHeard(l, second[i]), heardWithNames: second[i].heard }));
-    names.splice(0, names.length, ...names.map((n) => original.get(n) || n));
+  try {
+    let report = await transcribe();
+    const capitalised = new Set(spoken.flatMap((l) => /** @type {string} */ (l.text).split(/\s+/).filter((w) => /^\p{Lu}/u.test(w)).flatMap(words)));
+    const names = [...new Set(report.flatMap((l) => [...l.missed, ...l.near.map((n) => n[0])]).filter((w) => capitalised.has(w)))];
+    if (names.length) {
+      const original = new Map(spoken.flatMap((l) => /** @type {string} */ (l.text).split(/\s+/)).map((w) => [words(w)[0], w.replace(/[^\p{L}\p{N}'-]/gu, '')]));
+      const second = await transcribe(names.map((n) => original.get(n) || n).join(' '));
+      report = report.map((l, i) => ({ ...l, ...eitherHeard(l, second[i]), heardWithNames: second[i].heard }));
+      names.splice(0, names.length, ...names.map((n) => original.get(n) || n));
+    }
+    const expected = report.reduce((a, l) => a + words(l.text).length, 0);
+    const heard = report.reduce((a, l) => a + l.matched + l.near.length, 0);
+    return { model, names, share: expected ? heard / expected : 1, words: expected, lines: report };
+  } finally {
+    await rm(wav, { force: true });
   }
-  const expected = report.reduce((a, l) => a + words(l.text).length, 0);
-  const heard = report.reduce((a, l) => a + l.matched + l.near.length, 0);
-  return { model, names, share: expected ? heard / expected : 1, words: expected, lines: report };
 }
 
 /** @param {NonNullable<Awaited<ReturnType<typeof hearLines>>>} h */

@@ -280,7 +280,7 @@ export async function inspect(ws, m, file, dir, o) {
     if (sound.integratedLufs !== undefined && Math.abs(sound.integratedLufs - m.audio.loudness) > 2)
       issues.push(`Loudness ${sound.integratedLufs} LUFS, target ${m.audio.loudness}`);
   }
-  const narration = info.audio ? await hearNarration(ws, m, file, dir) : undefined;
+  const narration = info.audio ? await hearNarration(ws, m, file) : undefined;
   const balance = info.audio ? await narrationBalance(ws, m, dir) : undefined;
   if (balance && balance.lu < 6)
     issues.push(
@@ -319,21 +319,15 @@ export async function inspect(ws, m, file, dir, o) {
  * The hearing check on the delivered mix: the master's sound is transcribed and compared with
  * the narration script, so a voice buried under the music fails QA. Skipped without narration
  * timings or faster-whisper.
- * @param {string} ws @param {import('../core/manifest.js').Manifest} m @param {string} file @param {string} dir
+ * @param {string} ws @param {import('../core/manifest.js').Manifest} m @param {string} file
  */
-async function hearNarration(ws, m, file, dir) {
+async function hearNarration(ws, m, file) {
   if (!m.audio.voice || !existsSync(path.join(ws, 'kit', 'audio', 'voice.py'))) return undefined;
   const timings = inside(ws, m.audio.voice).replace(/\.wav$/i, '') + '.timeline.json';
   if (!existsSync(timings)) return undefined;
   const { hearLines } = await import('./voice.js');
-  const wav = path.join(dir, 'mix-16k.wav');
-  await ff(['-i', file, '-vn', '-ac', '1', '-ar', '16000', wav]);
-  try {
-    const lines = JSON.parse(await readFile(timings, 'utf8')).lines;
-    return await hearLines(ws, wav, lines, { language: m.language || 'en' });
-  } finally {
-    await rm(wav, { force: true });
-  }
+  const lines = JSON.parse(await readFile(timings, 'utf8')).lines;
+  return await hearLines(ws, file, lines, { language: m.language || 'en' });
 }
 
 /** Latest master in out/. @param {string} ws */
