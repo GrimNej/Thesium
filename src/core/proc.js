@@ -75,7 +75,7 @@ export function run(command, args, options = {}) {
       clearTimeout(timer);
       reject(
         /** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT'
-          ? new Error(`${command} was not found. Is it installed and on PATH?`)
+          ? Object.assign(new Error(`${command} was not found. Is it installed and on PATH?`), { code: 'ENOENT' })
           : error,
       );
     });

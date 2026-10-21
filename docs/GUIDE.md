@@ -27,7 +27,7 @@ with a picture; the text says what the picture leaves out.
 | | Needed for | Get it |
 | --- | --- | --- |
 | Node.js 22.12 or newer | everything | [nodejs.org](https://nodejs.org) |
-| FFmpeg (with ffprobe) | everything | [ffmpeg.org](https://ffmpeg.org/download.html), or `winget install ffmpeg`, `brew install ffmpeg`, `apt install ffmpeg` |
+| FFmpeg (with ffprobe) | everything | [ffmpeg.org](https://ffmpeg.org/download.html), or `winget install ffmpeg`, `brew install ffmpeg`, `apt install ffmpeg`, `pacman -S ffmpeg` |
 | Chrome, Edge or Chromium | the web engine, page capture, figures | usually already there |
 | Claude Code | the model that directs | [claude.com/claude-code](https://claude.com/claude-code) |
 | Python 3.10+ with numpy and scipy | original music and sound effects | `pip install numpy scipy` |
@@ -42,6 +42,21 @@ thesium doctor
 
 Each line says `ok` or `miss`, and every `miss` says how to fix it. Thesium itself has no npm
 dependencies to install.
+
+**On Linux**, and with Homebrew's Python on a Mac, the system Python refuses `pip install` (it
+says `externally-managed-environment`; Arch has no pip at all). Give Thesium its own Python once.
+Thesium uses `~/.thesium/venv` whenever it exists, and `thesium doctor` prints this command when
+it applies (on Debian and Ubuntu, `sudo apt install python3-venv` first):
+
+```
+python3 -m venv ~/.thesium/venv
+~/.thesium/venv/bin/pip install numpy scipy kokoro-onnx faster-whisper
+```
+
+**On Omarchy**, Node.js, FFmpeg, Chromium and Claude Code are already set up. Add the Python
+environment above for sound, `sudo pacman -S espeak-ng` for the `"system"` voice, and for the
+EffectCraft engine its Linux `.tar.gz` (see [Choose an engine](#4-choose-an-engine)). On plain Arch
+Linux, start with `sudo pacman -S nodejs npm ffmpeg chromium python`.
 
 **Three ways to install**
 
@@ -117,7 +132,8 @@ choice is about how the film is best written, not about quality:
 - **Web** is the default and the quickest to set up: if a browser can draw it, it can be in the film.
 - **EffectCraft** suits classic motion design: layers, effects, lights and cameras, written as an
   After Effects-style script. Install the [EffectCraft app](https://github.com/storytold/effectcraft/releases);
-  Thesium finds it, or set `THESIUM_EFFECTCRAFT` to its `effectcraft-cli`.
+  Thesium finds it, or set `THESIUM_EFFECTCRAFT` to its `effectcraft-cli`. On Linux, unpack the
+  `.tar.gz` and link its `bin/effectcraft-cli` into `~/.local/bin`.
 - **Remotion** suits long films built from reusable React components. Each film installs its own
   Remotion: run `npm install` in `film/remotion` once.
 - **HyperFrames** suits timeline choreography in HTML and GSAP. Thesium runs its CLI through `npx`,
@@ -161,7 +177,7 @@ and each master checks that balance and listens to the final mix again.
 | `"t": 4.8, "text": "…"` | a line and when it starts, in seconds |
 | `"say": "…"` | how to pronounce it, when that differs from what is written |
 | `"file": "assets/vo/take-3.wav"` | a recorded take instead of a synthetic voice |
-| `"provider": "system"` or `"command"` | the computer's own voice, or any text-to-speech program |
+| `"provider": "system"` or `"command"` | the computer's own voice (espeak-ng on Linux), or any text-to-speech program |
 
 ---
 
@@ -229,8 +245,10 @@ part of Thesium works.
 | `Remotion is not installed in film/remotion` | Run `npm install` in that folder once. |
 | `The film never set window.ready = true` | The web page threw an error before it was ready; the message lists the page's errors. |
 | `… needs about N GB of temporary space` | Free space on the temporary drive, or point `TEMP` (Windows) or `TMPDIR` to a larger one. |
-| `Narration with Kokoro needs kokoro-onnx` | `pip install kokoro-onnx`; or set `"provider": "system"` for a quick guide track. |
-| `Hearing check skipped` | `pip install faster-whisper` to have narration transcribed and checked. |
+| `Narration with Kokoro needs kokoro-onnx` | Run the install command it shows; or set `"provider": "system"` for a quick guide track. |
+| `Hearing check skipped` | Run the install command it shows to have narration transcribed and checked. |
+| `externally-managed-environment`, or `No module named pip` | The system Python refuses pip: give Thesium its own, `~/.thesium/venv` ([Install](#1-install)). |
+| `The "system" voice on Linux is espeak-ng` | `sudo pacman -S espeak-ng` (Arch, Omarchy) or `sudo apt install espeak-ng` (Debian, Ubuntu). |
 | A `make` session stopped halfway | `thesium make --continue --folder <film>` picks it up. |
 | `check` says FAIL | Each finding names the file and the rule; the model fixes these itself when it runs the film. |
 
@@ -249,6 +267,10 @@ renders, and the other engines' checks reject files that would be fetched from i
 
 **Can I use my own fonts, music, footage or voice?** Yes. Put them in `assets/` and mention them
 in the request; the model records where each one came from in `assets/SOURCES.md`.
+
+**Does it run on Linux, and on Omarchy?** Yes. Tests run on Ubuntu on every push, and weekly on
+Arch Linux, the base of Omarchy, with EffectCraft and Remotion films included. Renders need no
+desktop: Chromium and the engines run headless. Setup notes are under [Install](#1-install).
 
 **Which sizes and lengths work?** Any: `--size 16:9`, `9:16`, `1:1` or `1920x1080`, at any frame
 rate and length. Vertical films are checked at phone size like every other.

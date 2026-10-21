@@ -1,6 +1,6 @@
 # Thesium build log
 
-Last updated 2026-10-20, version 1.0.0. Design: [BLUEPRINT.md](BLUEPRINT.md). How to use it:
+Last updated 2026-10-21, version 1.0.0. Design: [BLUEPRINT.md](BLUEPRINT.md). How to use it:
 [GUIDE.md](GUIDE.md).
 
 ## Built and verified
@@ -28,16 +28,25 @@ Last updated 2026-10-20, version 1.0.0. Design: [BLUEPRINT.md](BLUEPRINT.md). Ho
   master QA that measures the balance and listens to the mix. Measured per language: English,
   Spanish, French, Italian and Brazilian Portuguese are heard back at 92–100%; Kokoro's Hindi,
   Japanese and Mandarin are not usable through kokoro-onnx (64%, 18%, 33%), and Thesium warns.
+  The hearing check decodes with FFmpeg and hands Whisper samples: PyAV 19.0 broke
+  faster-whisper's own decoder, so every fresh install had a crashing hearing check.
 - **Examples**: the launch film on EffectCraft, web, HyperFrames and Remotion (one plan, four
   engines, `docs/media/parity-sheet.jpg`), and a narrated film drawn from the hearing check.
 - **EffectCraft**: every limit re-verified with minimal scripts (`docs/upstream/effectcraft/`).
   Two bugs and two feature requests hold up and are drafted; three effects earlier listed as broken
   work, and the guide is corrected.
+- **Linux and Omarchy**: verified on Arch Linux (Omarchy's base) as Omarchy sets it up, as a
+  normal user: Node 26, FFmpeg 9, Chromium 155 and Python 3.14; the web, EffectCraft (its Linux
+  `.tar.gz`), Remotion and HyperFrames engines; Kokoro narration. Arch's Python has no pip and
+  refuses installs (PEP 668), so Thesium uses its own `~/.thesium/venv` when it exists and every
+  install hint gives the venv command there; the `"system"` voice on Linux needs espeak-ng, which
+  `doctor` now checks.
 - **Docs**: a visual guide (`docs/GUIDE.md`) with nine figures rendered from HTML by Thesium's own
   Chrome client (`docs/figures/`), a new README, and this blueprint.
-- **Tests**: 19 (core, frame check, QR, MCP, motion-blur sampling, end-to-end web, command,
-  EffectCraft and Remotion films, a motion-blurred native sequence, narration). CI runs them on
-  Linux with Node 22 and 24 on every push, and on Windows and macOS weekly, on tags and on demand.
+- **Tests**: 20 (core, frame check, QR, MCP, motion-blur sampling, end-to-end web, command,
+  EffectCraft and Remotion films, a motion-blurred native sequence, narration, the Python lookup).
+  CI runs them on Linux with Node 22 and 24 on every push, and on Windows, macOS and Arch Linux
+  (with EffectCraft and Remotion, `.github/arch.sh`) weekly, on tags and on demand.
 
 ## Decisions worth remembering
 

@@ -15,7 +15,7 @@ import { inside, rel } from '../core/paths.js';
 import { loadManifest } from '../core/manifest.js';
 import { ff, probe } from '../media/ffmpeg.js';
 import { loudness } from '../media/audio.js';
-import { hasModule, py } from './python.js';
+import { hasModule, pipInstall, py } from './python.js';
 
 export const MODEL_HOME = process.env.THESIUM_MODELS || path.join(os.homedir(), '.thesium', 'models');
 
@@ -103,6 +103,19 @@ function sh(line, cwd, input) {
   return run(shell, args, { cwd, timeout: 600000, input, verbatim: true });
 }
 
+/** Linux has no voice of its own; Thesium speaks with espeak-ng. */
+const ESPEAK = 'install espeak-ng (Arch, Omarchy: sudo pacman -S espeak-ng; Debian, Ubuntu: sudo apt install espeak-ng)';
+
+/** Whether the "system" provider can speak here, and with what. @returns {Promise<[boolean, string]>} */
+export async function systemVoiceCheck() {
+  if (process.platform === 'win32') return [true, 'Windows speech (SAPI)'];
+  if (process.platform === 'darwin') return [true, 'macOS say'];
+  return run('espeak-ng', ['--version'], { timeout: 10000 }).then(
+    ({ stdout }) => [true, stdout.split('\n')[0].replace(/\s+Data at.*/, '').trim()],
+    () => [false, `optional: ${ESPEAK} for the "system" provider's temp tracks`],
+  );
+}
+
 /** The operating system's own voice: SAPI on Windows, say on macOS, espeak-ng on Linux. @param {Take} take @param {string} textFile */
 async function systemVoice(take, textFile) {
   if (process.platform === 'win32') {
@@ -125,7 +138,9 @@ async function systemVoice(take, textFile) {
     await run('say', ['-o', take.file, '--file-format=WAVE', '--data-format=LEI16@22050', '-r', String(Math.round(175 * take.speed)), ...voice, '-f', textFile], { timeout: 120000 });
   } else {
     const voice = take.voice ? ['-v', take.voice] : [];
-    await run('espeak-ng', ['-w', take.file, '-s', String(Math.round(175 * take.speed)), ...voice, '-f', textFile], { timeout: 120000 });
+    await run('espeak-ng', ['-w', take.file, '-s', String(Math.round(175 * take.speed)), ...voice, '-f', textFile], { timeout: 120000 }).catch((error) => {
+      throw error.code === 'ENOENT' ? new Error(`The "system" voice on Linux is espeak-ng: ${ESPEAK}, or use Kokoro`) : error;
+    });
   }
 }
 
@@ -137,7 +152,7 @@ async function synthesise(ws, provider, spec, todo, log) {
   const scratch = path.join(ws, '.thesium', 'voice');
   await mkdir(scratch, { recursive: true });
   if (provider === 'kokoro') {
-    if (!(await hasModule('kokoro_onnx'))) throw new Error('Narration with Kokoro needs kokoro-onnx: python -m pip install kokoro-onnx (or set "provider": "system" for a temp track)');
+    if (!(await hasModule('kokoro_onnx'))) throw new Error(`Narration with Kokoro needs kokoro-onnx: ${await pipInstall('kokoro-onnx')} (or set "provider": "system" for a temp track)`);
     const files = await ensureKokoro(log);
     const jobs = path.join(scratch, 'jobs.json');
     await writeFile(jobs, JSON.stringify(todo.map((t) => ({ text: t.say, voice: t.voice, speed: t.speed, lang: t.lang || undefined, out: t.file }))));
@@ -408,14 +423,14 @@ export async function voice(ws, args, o = {}) {
     }
     await mkdir(path.join(ws, 'review'), { recursive: true });
     await writeFile(path.join(ws, 'review', 'voice-heard.json'), JSON.stringify(heard, null, 1));
-  } else report.push('Hearing check skipped: pip install faster-whisper to have the narration transcribed and compared with the script.');
+  } else report.push(`Hearing check skipped: ${await pipInstall('faster-whisper')} to have the narration transcribed and compared with the script.`);
   if (m.audio.voice !== rel(ws, out)) report.push(`Declare it: thesium.json → audio.voice = "${rel(ws, out)}"`);
   return { text: report.join('\n'), files: [out, timelineFile] };
 }
 
 /** Kokoro's voice ids. @param {string} ws @param {{ log?: (s: string) => void }} [o] */
 export async function voices(ws, o = {}) {
-  if (!(await hasModule('kokoro_onnx'))) return { text: 'Kokoro is not installed: python -m pip install kokoro-onnx. The "system" provider uses the operating system\'s voices.', files: [] };
+  if (!(await hasModule('kokoro_onnx'))) return { text: `Kokoro is not installed: ${await pipInstall('kokoro-onnx')}. The "system" provider uses the operating system's voices.`, files: [] };
   const files = await ensureKokoro(o.log);
   const list = (await py(ws, [path.join(ws, 'kit', 'audio', 'voice.py'), 'voices', files.model, files.voices])).split(/\s+/).filter(Boolean);
   const byLang = {};

@@ -159,7 +159,7 @@ export const effectcraftEngine = {
       return {
         ok: false,
         detail: 'effectcraft-cli not found',
-        fix: 'Download EffectCraft from https://github.com/storytold/effectcraft/releases (Windows: the portable zip into %LOCALAPPDATA%\\Programs\\EffectCraft\\<version>), or set THESIUM_EFFECTCRAFT',
+        fix: 'Download EffectCraft from https://github.com/storytold/effectcraft/releases (Windows: the portable zip into %LOCALAPPDATA%\\Programs\\EffectCraft\\<version>; Linux: the .tar.gz, with its bin/effectcraft-cli linked into ~/.local/bin), or set THESIUM_EFFECTCRAFT',
       };
     try {
       const { stdout } = await run(cli, ['--version'], { timeout: 20000 });

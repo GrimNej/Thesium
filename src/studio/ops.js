@@ -512,24 +512,25 @@ export async function doctor() {
   rows.push(['node', true, process.version]);
   const ff = await ffmpegVersion();
   rows.push(['ffmpeg', Boolean(ff), ff || 'missing: install FFmpeg and put ffmpeg/ffprobe on PATH']);
-  const python = process.env.THESIUM_PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+  const { hasModule, pipInstall, python } = await import('./python.js');
   try {
-    const { stdout } = await run(python, ['-c', 'import numpy, scipy, sys; print(sys.version.split()[0], numpy.__version__, scipy.__version__)'], { timeout: 30000 });
+    const { stdout } = await run(python(), ['-c', 'import numpy, scipy, sys; print(sys.version.split()[0], numpy.__version__, scipy.__version__)'], { timeout: 30000 });
     const [py, np, sp] = stdout.trim().split(' ');
     rows.push(['python (sound)', true, `Python ${py}, numpy ${np}, scipy ${sp}`]);
   } catch {
-    rows.push(['python (sound)', false, 'optional: Python 3.10+ with numpy and scipy for scores, SFX and beat tracking']);
+    rows.push(['python (sound)', false, `optional: Python 3.10+ with numpy and scipy for scores, SFX and beat tracking: ${await pipInstall('numpy scipy')}`]);
   }
-  const { hasModule } = await import('./python.js');
   rows.push(
     (await hasModule('kokoro_onnx'))
       ? ['voice (kokoro)', true, 'Kokoro text-to-speech; the model downloads once into ~/.thesium/models']
-      : ['voice (kokoro)', false, `optional: ${python} -m pip install kokoro-onnx for local narration (the "system" provider needs nothing)`],
+      : ['voice (kokoro)', false, `optional: ${await pipInstall('kokoro-onnx')} for local narration`],
   );
+  const { systemVoiceCheck } = await import('./voice.js');
+  rows.push(['voice (system)', ...(await systemVoiceCheck())]);
   rows.push(
     (await hasModule('faster_whisper'))
       ? ['hearing (whisper)', true, 'faster-whisper transcribes narration and masters to check every word']
-      : ['hearing (whisper)', false, `optional: ${python} -m pip install faster-whisper so narration is transcribed and checked`],
+      : ['hearing (whisper)', false, `optional: ${await pipInstall('faster-whisper')} so narration is transcribed and checked`],
   );
   for (const e of Object.values(ENGINES)) {
     const d = await e.detect().catch((error) => ({ ok: false, detail: String(error), version: undefined, fix: undefined }));

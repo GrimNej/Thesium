@@ -85,7 +85,9 @@ that reads well on mute should stay on mute.
   check expects; `say` respells it for pronunciation; `file` uses a recorded take instead.
   `voice`, `speed`, `lang` and `gain` (dB) work for the whole script or per line.
 - Providers: `"kokoro"` (default; Kokoro-82M, local, `pip install kokoro-onnx`, the model downloads
-  once), `"system"` (the operating system's voice, for a temp track), or `"command"` with
+  once; where the system Python refuses pip, Thesium uses its own `~/.thesium/venv` and its
+  messages give the command), `"system"` (the operating system's voice, for a temp track: SAPI,
+  `say`, or espeak-ng on Linux), or `"command"` with
   `"command": "piper -m voice.onnx -f \"{out}\""` for any text-to-speech CLI (text on stdin and in
   `{textFile}`; also `{voice}`, `{speed}`, `{lang}`). Quote paths in templates.
 - Kokoro voices (`thesium sound voices`): `af_heart`, `af_bella`, `af_nicole`, `am_michael`,

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { compareWords, eitherHeard, words } from '../src/studio/voice.js';
@@ -9,6 +9,7 @@ import { duckExpression, narrationBalance, speechSpans, VOICE_OVER_MUSIC } from 
 import { ff, probe } from '../src/media/ffmpeg.js';
 import { loadManifest } from '../src/core/manifest.js';
 import { sound } from '../src/studio/sound.js';
+import { python, venvPython } from '../src/studio/python.js';
 import { main } from '../src/cli.js';
 
 const quiet = async (fn) => {
@@ -96,5 +97,24 @@ test('narration places timed lines, caches takes, reports overlaps and auto-duck
   } finally {
     delete process.env.THESIUM_HEARING;
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('Python is THESIUM_PYTHON, then ~/.thesium/venv when it exists, then the system one', async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'thesium-home-'));
+  const saved = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE, THESIUM_PYTHON: process.env.THESIUM_PYTHON };
+  try {
+    process.env.HOME = process.env.USERPROFILE = home;
+    delete process.env.THESIUM_PYTHON;
+    assert.equal(python(), process.platform === 'win32' ? 'python' : 'python3');
+    assert.ok(venvPython().startsWith(path.join(home, '.thesium', 'venv')), venvPython());
+    await mkdir(path.dirname(venvPython()), { recursive: true });
+    await writeFile(venvPython(), '');
+    assert.equal(python(), venvPython());
+    process.env.THESIUM_PYTHON = 'my-python';
+    assert.equal(python(), 'my-python');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) value === undefined ? delete process.env[key] : (process.env[key] = value);
+    await rm(home, { recursive: true, force: true });
   }
 });
