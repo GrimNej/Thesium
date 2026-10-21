@@ -153,7 +153,7 @@ examples/       the films above, with their making-of
 
 Version 1.0.0. All five engines are verified end to end, each with a master that passes QA, and the
 films above were made with it. Tests run on every push on Linux (Node 22 and 24), and weekly on
-Windows and macOS. Ideas for what comes next are in the [blueprint](docs/BLUEPRINT.md#18-roadmap).
+Windows, macOS and Arch Linux (the base of Omarchy). Ideas for what comes next are in the [blueprint](docs/BLUEPRINT.md#18-roadmap).
 
 ## Credits
 
