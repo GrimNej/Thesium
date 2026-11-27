@@ -1,0 +1,37 @@
+{
+  "id": "D-04",
+  "area": "Infra",
+  "title": "Drive the system Chrome over a DevTools pipe",
+  "chose": "Thesium's own Chrome DevTools Protocol client over --remote-debugging-pipe",
+  "over": [
+    {
+      "name": "Playwright",
+      "why": "It brings its own dependency tree and its own browser download."
+    },
+    {
+      "name": "A headless screenshot command line",
+      "why": "It cannot give Thesium the fonts, the blocked network and the per-slot contexts the web engine needs."
+    }
+  ],
+  "because": "The web engine must block every request outside the loopback server. It keeps one context per parallel slot. A pipe needs no WebSocket library.",
+  "tradeoff": "Thesium maintains its own protocol client and has to cope with Chrome's changing output.",
+  "reversibility": "medium",
+  "status": "accepted",
+  "provenance": "inferred",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "browser",
+    "engines"
+  ],
+  "refs": [
+    "src/browser/chrome.js"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "src/browser/chrome.js",
+    "docs/BLUEPRINT.md section 6",
+    "docs/BLUEPRINT.md section 13"
+  ],
+  "needsConfirm": true
+}

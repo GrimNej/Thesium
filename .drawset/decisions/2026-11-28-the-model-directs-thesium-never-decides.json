@@ -1,0 +1,37 @@
+{
+  "id": "D-06",
+  "area": "AI",
+  "title": "Thesium never decides, the model directs",
+  "chose": "A frontier model as the director, with Thesium rendering, measuring and checking",
+  "over": [
+    {
+      "name": "A template-driven generator",
+      "why": "Every film would look the same and the person could not shape it."
+    },
+    {
+      "name": "A visual editor the person drives",
+      "why": "The promise is that a short request becomes a finished film."
+    }
+  ],
+  "because": "The craft comes from the model. Thesium's job is to give it a real environment and a strict gate to pass.",
+  "tradeoff": "The film depends on a model session, so a usage limit or a closed terminal can stop it mid-way.",
+  "reversibility": "hard",
+  "status": "accepted",
+  "provenance": "recorded",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "director",
+    "ops"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "docs/BLUEPRINT.md section 2",
+    "skills/thesium/SKILL.md"
+  ],
+  "confirmedBy": "Claude Code",
+  "refs": [
+    "skills/thesium/SKILL.md",
+    "src/studio/make.js"
+  ]
+}

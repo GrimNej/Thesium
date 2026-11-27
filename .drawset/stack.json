@@ -1,0 +1,26 @@
+[
+  {
+    "id": "react",
+    "why": "Remotion films are React projects, so the Remotion example and driver use React 19.",
+    "alternatives": [
+      "Vanilla canvas",
+      "Svelte"
+    ]
+  },
+  {
+    "id": "typescript",
+    "why": "The code is plain JavaScript with JSDoc types, checked by TypeScript in CI.",
+    "alternatives": [
+      "Rewrite in TypeScript",
+      "No type check"
+    ]
+  },
+  {
+    "id": "github-actions",
+    "why": "Tests run on Linux on every push, and weekly on Windows, macOS and Arch Linux.",
+    "alternatives": [
+      "Local tests only",
+      "A paid CI service"
+    ]
+  }
+]

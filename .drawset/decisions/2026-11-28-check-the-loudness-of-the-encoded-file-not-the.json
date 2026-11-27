@@ -1,0 +1,31 @@
+{
+  "id": "D-07",
+  "area": "Backend",
+  "title": "Check the loudness of the encoded file, not the limiter",
+  "chose": "Measure the encoded file's true peak and re-encode lower until it is at target",
+  "over": [
+    {
+      "name": "Trust the limiter before encoding",
+      "why": "AAC creates inter-sample peaks the limiter never saw."
+    }
+  ],
+  "because": "The showcase film's first master measured -0.3 dBTP after encoding. Thesium must judge the master on the file the person receives.",
+  "tradeoff": "Thesium may encode a master more than once.",
+  "reversibility": "easy",
+  "status": "accepted",
+  "provenance": "recorded",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "media"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "docs/BLUEPRINT.md section 8",
+    "src/media/audio.js"
+  ],
+  "refs": [
+    "src/media/audio.js"
+  ],
+  "confirmedBy": "Claude Code"
+}

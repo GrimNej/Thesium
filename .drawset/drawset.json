@@ -1,0 +1,20 @@
+{
+  "drawset": 1,
+  "project": {
+    "id": "thesium",
+    "name": "Thesium",
+    "tagline": "You describe a film. A model directs it and masters it on any rendering engine.",
+    "summary": "Thesium is a local motion studio for frontier models. You give it a short request. A Claude Code session writes the film in code, looks at its own frames, fixes what it sees, scores it, checks it and masters it. The film renders on whichever engine you pick: a web page, EffectCraft, Remotion, HyperFrames or any command line. Everything stays in folders on your own machine. FFmpeg, Chrome and Python do the work.",
+    "drawsetSince": "2026-11-28"
+  },
+  "settings": {
+    "brief": true,
+    "nudge": {
+      "enabled": true,
+      "threshold": 4
+    },
+    "build": {
+      "browserCheck": "on-demand"
+    }
+  }
+}

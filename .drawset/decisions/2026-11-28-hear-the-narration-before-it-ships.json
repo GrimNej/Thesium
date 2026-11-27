@@ -1,0 +1,36 @@
+{
+  "id": "D-05",
+  "area": "Backend",
+  "title": "Hear the narration before it ships",
+  "chose": "Transcribe the narration with faster-whisper and compare it word by word with the script",
+  "over": [
+    {
+      "name": "Trust the text-to-speech output",
+      "why": "The director cannot listen, so a wrong name or a swallowed word would ship unnoticed."
+    },
+    {
+      "name": "A human listening pass",
+      "why": "It would put a person in the loop for every film."
+    }
+  ],
+  "because": "The model has no ears, so the words it hears back are the only proof that the voice track says what the script says.",
+  "tradeoff": "Whisper does not know invented names, so it needs a second pass and still misses some words.",
+  "reversibility": "easy",
+  "status": "accepted",
+  "provenance": "inferred",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "ops",
+    "media"
+  ],
+  "refs": [
+    "src/studio/voice.js"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "src/studio/voice.js",
+    "docs/BLUEPRINT.md section 8"
+  ],
+  "needsConfirm": true
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "k-manifest",
+    "claim": "One validated manifest describes every film",
+    "file": "src/core/manifest.js",
+    "anchor": "loadManifest",
+    "components": [
+      "core"
+    ]
+  },
+  {
+    "id": "k-frame",
+    "claim": "Every engine draws one frame at a given time",
+    "file": "src/engines/index.js",
+    "anchor": "frame the image at time t",
+    "components": [
+      "engines"
+    ]
+  },
+  {
+    "id": "k-served",
+    "claim": "The studio serves only out, review and assets",
+    "file": "src/studio/server.js",
+    "anchor": "const SERVED = ['out/', 'review/', 'assets/']",
+    "components": [
+      "studio"
+    ]
+  },
+  {
+    "id": "k-pinned",
+    "claim": "A pinned size and SHA-256 protect the narration model",
+    "file": "src/studio/voice.js",
+    "anchor": "model: { name: 'kokoro-v1.0.onnx', size: 325532387, sha256: '7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5' },",
+    "components": [
+      "ops"
+    ]
+  },
+  {
+    "id": "k-inside",
+    "claim": "Thesium refuses a workspace path that leaves the film folder",
+    "file": "src/core/paths.js",
+    "anchor": "inside",
+    "components": [
+      "core"
+    ]
+  },
+  {
+    "id": "k-offline",
+    "claim": "The web engine blocks every remote request while it renders",
+    "file": "src/engines/web.js",
+    "anchor": "Remote URLs are blocked while rendering",
+    "components": [
+      "engines"
+    ]
+  }
+]

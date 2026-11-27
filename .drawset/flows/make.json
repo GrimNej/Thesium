@@ -1,0 +1,104 @@
+{
+  "id": "make",
+  "title": "Make a film from one sentence",
+  "summary": "A request becomes a film folder, a plan, frames to look at, a sound track and a master.",
+  "participants": [
+    {
+      "id": "director",
+      "label": "Director",
+      "type": "external"
+    },
+    {
+      "id": "cli",
+      "label": "Thesium CLI",
+      "type": "backend"
+    },
+    {
+      "id": "ops",
+      "label": "Operations",
+      "type": "backend"
+    },
+    {
+      "id": "engines",
+      "label": "Engines",
+      "type": "backend"
+    },
+    {
+      "id": "media",
+      "label": "Media and sound",
+      "type": "backend"
+    },
+    {
+      "id": "studio",
+      "label": "Review studio",
+      "type": "frontend"
+    },
+    {
+      "id": "core",
+      "label": "Film workspace",
+      "type": "database"
+    }
+  ],
+  "phases": [
+    {
+      "label": "Create the film",
+      "steps": [
+        {
+          "from": "director",
+          "to": "cli",
+          "label": "thesium make \"…\""
+        },
+        {
+          "from": "cli",
+          "to": "ops",
+          "label": "create the film folder"
+        },
+        {
+          "from": "ops",
+          "to": "core",
+          "label": "write thesium.json and the plan"
+        }
+      ]
+    },
+    {
+      "label": "Direct",
+      "steps": [
+        {
+          "from": "director",
+          "to": "ops",
+          "label": "write the film source"
+        },
+        {
+          "from": "ops",
+          "to": "engines",
+          "label": "draw the frame at t"
+        },
+        {
+          "from": "ops",
+          "to": "media",
+          "label": "score and mix the sound"
+        }
+      ]
+    },
+    {
+      "label": "Check and master",
+      "steps": [
+        {
+          "from": "ops",
+          "to": "media",
+          "label": "master and measure"
+        },
+        {
+          "from": "media",
+          "to": "director",
+          "label": "evidence to look at"
+        },
+        {
+          "from": "director",
+          "to": "studio",
+          "label": "hand over for notes"
+        }
+      ]
+    }
+  ]
+}

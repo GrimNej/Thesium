@@ -1,0 +1,37 @@
+{
+  "id": "D-02",
+  "area": "Tooling",
+  "title": "No runtime npm dependencies",
+  "chose": "Plain ESM JavaScript with FFmpeg, Chrome and Python doing the work",
+  "over": [
+    {
+      "name": "Playwright or Puppeteer for the browser",
+      "why": "It would pull in a browser download and a dependency tree the project does not need."
+    },
+    {
+      "name": "A web framework for the studio page",
+      "why": "One local page does not need a server framework."
+    }
+  ],
+  "because": "Thesium installs with a clone and uses the tools the person already has, so there is nothing to audit or update after the install.",
+  "tradeoff": "Thesium writes more of its own plumbing, such as its own Chrome DevTools Protocol client.",
+  "reversibility": "medium",
+  "status": "accepted",
+  "provenance": "inferred",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "cli",
+    "browser"
+  ],
+  "refs": [
+    "src/browser/chrome.js"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "README.md",
+    "docs/BLUEPRINT.md section 2",
+    "package.json"
+  ],
+  "needsConfirm": true
+}

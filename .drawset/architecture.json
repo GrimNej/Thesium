@@ -1,0 +1,624 @@
+{
+  "components": [
+    {
+      "id": "director",
+      "place": [
+        1,
+        1
+      ],
+      "label": "Director",
+      "sublabel": "A model with Thesium's skill",
+      "type": "external",
+      "does": "Makes the film. It reads the brief, writes the plan, builds the shots in code, looks at its own frames and decides what to fix.",
+      "files": [
+        "skills/thesium/SKILL.md",
+        "agents/critic.md",
+        "knowledge/"
+      ],
+      "inside": [
+        {
+          "id": "director-skill",
+          "label": "Director skill",
+          "does": "The workflow the model follows from setup to the finished master.",
+          "files": [
+            "skills/thesium/SKILL.md"
+          ]
+        },
+        {
+          "id": "director-critic",
+          "label": "Critic",
+          "does": "An independent reviewer that grades the master from evidence it gathers itself.",
+          "files": [
+            "agents/critic.md"
+          ]
+        },
+        {
+          "id": "director-library",
+          "label": "Motion Library",
+          "does": "The craft the model reads on demand: direction, sound, styles and one guide per engine.",
+          "files": [
+            "knowledge/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cli",
+      "place": [
+        1,
+        2
+      ],
+      "label": "Thesium CLI",
+      "sublabel": "Plain Node, no dependencies",
+      "type": "backend",
+      "does": "The command you type. Every command works on the film folder you are standing in.",
+      "files": [
+        "src/cli.js",
+        "cli/thesium.js"
+      ],
+      "inside": [
+        {
+          "id": "cli-commands",
+          "label": "Commands",
+          "does": "Parses the command line and calls one studio operation.",
+          "files": [
+            "src/cli.js"
+          ]
+        },
+        {
+          "id": "cli-launcher",
+          "label": "Installed launcher",
+          "does": "The `thesium` command that npm link puts on your path.",
+          "files": [
+            "cli/thesium.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "place": [
+        0,
+        1
+      ],
+      "label": "MCP server",
+      "sublabel": "JSON-RPC over stdio",
+      "type": "external",
+      "does": "Gives the studio to clients that have no shell, such as Claude Desktop. Stills and sheets come back as images.",
+      "files": [
+        "src/mcp/server.js"
+      ],
+      "inside": [
+        {
+          "id": "mcp-tools",
+          "label": "Studio tools",
+          "does": "The same operations as the CLI, offered as MCP tools.",
+          "files": [
+            "src/mcp/server.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "studio",
+      "place": [
+        0,
+        2
+      ],
+      "label": "Review studio",
+      "sublabel": "A local page on 127.0.0.1",
+      "type": "frontend",
+      "does": "Where you watch the film. You can pin notes on the timeline and tune the parameters the model exposed.",
+      "files": [
+        "src/studio/server.js",
+        "src/studio/ui/index.html"
+      ],
+      "inside": [
+        {
+          "id": "studio-page",
+          "label": "Studio page",
+          "does": "Shows the versions, the named beats on the track and every note as a pin.",
+          "files": [
+            "src/studio/ui/index.html"
+          ]
+        },
+        {
+          "id": "studio-server",
+          "label": "Studio server",
+          "does": "Serves only out, review and assets. It saves each note with the exact frame where the person left it.",
+          "files": [
+            "src/studio/server.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ops",
+      "place": [
+        1,
+        3
+      ],
+      "label": "Studio operations",
+      "sublabel": "What Thesium does for a film",
+      "type": "backend",
+      "does": "The one layer the CLI, the MCP server and the studio all call, so every interface behaves the same.",
+      "files": [
+        "src/studio/ops.js",
+        "src/studio/make.js",
+        "src/studio/sound.js",
+        "src/studio/capture.js",
+        "src/studio/qr.js",
+        "src/studio/python.js"
+      ],
+      "inside": [
+        {
+          "id": "ops-core",
+          "label": "Studio operations",
+          "does": "Stills, strips, previews, checks, masters and notes, all from one place.",
+          "files": [
+            "src/studio/ops.js"
+          ]
+        },
+        {
+          "id": "ops-make",
+          "label": "One-command make",
+          "does": "Turns a request into a film folder and a headless director session that finishes the film.",
+          "files": [
+            "src/studio/make.js"
+          ]
+        },
+        {
+          "id": "ops-sound",
+          "label": "Sound commands",
+          "does": "Scores, sound effects, narration, beat tracking and the loudness checks.",
+          "files": [
+            "src/studio/sound.js"
+          ]
+        },
+        {
+          "id": "ops-material",
+          "label": "Material",
+          "does": "Captures web pages as real material and writes real QR codes.",
+          "files": [
+            "src/studio/capture.js",
+            "src/studio/qr.js"
+          ]
+        },
+        {
+          "id": "ops-python",
+          "label": "Python helper",
+          "does": "Finds Python and the sound packages the kit needs.",
+          "files": [
+            "src/studio/python.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "engines",
+      "place": [
+        1,
+        4
+      ],
+      "label": "Engines",
+      "sublabel": "Five renderers, one contract",
+      "type": "backend",
+      "does": "Drives whichever renderer you chose, from a web page to any command line such as Blender. Every renderer draws the same thing: the image at time t.",
+      "files": [
+        "src/engines/"
+      ],
+      "inside": [
+        {
+          "id": "engines-contract",
+          "label": "Engine contract",
+          "does": "Says what a renderer must do, and the rules a film's source must follow.",
+          "files": [
+            "src/engines/index.js",
+            "src/engines/rules.js"
+          ]
+        },
+        {
+          "id": "engines-web",
+          "label": "Web engine",
+          "does": "Renders a page that draws the frame, in headless Chrome.",
+          "files": [
+            "src/engines/web.js"
+          ]
+        },
+        {
+          "id": "engines-effectcraft",
+          "label": "EffectCraft driver",
+          "does": "Builds an AE-style script and draws its frames.",
+          "files": [
+            "src/engines/effectcraft.js"
+          ]
+        },
+        {
+          "id": "engines-remotion",
+          "label": "Remotion driver",
+          "does": "Bundles a React project once, then draws from it.",
+          "files": [
+            "src/engines/remotion.js"
+          ]
+        },
+        {
+          "id": "engines-hyperframes",
+          "label": "HyperFrames driver",
+          "does": "Snapshots and renders an HTML timeline with GSAP.",
+          "files": [
+            "src/engines/hyperframes.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "render",
+      "place": [
+        1,
+        5
+      ],
+      "label": "Rendering",
+      "sublabel": "Stills, previews and masters",
+      "type": "backend",
+      "does": "Turns the engine's frames into the images you look at and the film you watch, with the motion blur the master will have.",
+      "files": [
+        "src/render/frames.js"
+      ],
+      "inside": [
+        {
+          "id": "render-stills",
+          "label": "Stills and strips",
+          "does": "Renders exact times and tiles neighbouring frames into one sheet.",
+          "files": [
+            "src/render/frames.js"
+          ]
+        },
+        {
+          "id": "render-video",
+          "label": "Video and motion blur",
+          "does": "Renders the whole film, averaging the samples inside each frame's shutter.",
+          "files": [
+            "src/render/frames.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "place": [
+        2,
+        4
+      ],
+      "label": "Browser",
+      "sublabel": "Chrome DevTools over a pipe",
+      "type": "backend",
+      "does": "Draws the web films in the Chrome already on your machine, and serves the studio page from the film folder.",
+      "files": [
+        "src/browser/chrome.js",
+        "src/browser/server.js"
+      ],
+      "inside": [
+        {
+          "id": "browser-chrome",
+          "label": "Chrome driver",
+          "does": "Speaks to headless Chrome over a pipe, with no Playwright and no WebSocket.",
+          "files": [
+            "src/browser/chrome.js"
+          ]
+        },
+        {
+          "id": "browser-server",
+          "label": "Loopback file server",
+          "does": "Serves the studio page and the film's files over 127.0.0.1 only.",
+          "files": [
+            "src/browser/server.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "place": [
+        2,
+        3
+      ],
+      "label": "Media and sound",
+      "sublabel": "FFmpeg for pixels and audio",
+      "type": "backend",
+      "does": "Does the measuring and mixing: contact sheets, loudness, ducking, mastering and the numbers behind them.",
+      "files": [
+        "src/media/ffmpeg.js",
+        "src/media/audio.js"
+      ],
+      "inside": [
+        {
+          "id": "media-ffmpeg",
+          "label": "FFmpeg helpers",
+          "does": "Grabs frames, builds labelled sheets and probes every file.",
+          "files": [
+            "src/media/ffmpeg.js"
+          ]
+        },
+        {
+          "id": "media-audio",
+          "label": "Sound mix",
+          "does": "Mixes the stems, ducks the music under narration and masters to the loudness target.",
+          "files": [
+            "src/media/audio.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "place": [
+        2,
+        2
+      ],
+      "label": "Quality gates",
+      "sublabel": "Pixel and source checks",
+      "type": "backend",
+      "does": "Catches what the model cannot see: empty bands, flat colour, a wrong language on screen, a film that changes between two runs.",
+      "files": [
+        "src/review/framecheck.js",
+        "src/review/language.js"
+      ],
+      "inside": [
+        {
+          "id": "review-frame",
+          "label": "Frame check",
+          "does": "Measures empty edges and flat colour fields on raw pixels of any engine's output.",
+          "files": [
+            "src/review/framecheck.js"
+          ]
+        },
+        {
+          "id": "review-language",
+          "label": "Language check",
+          "does": "Checks that the words on screen are the language the brief asked for.",
+          "files": [
+            "src/review/language.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "place": [
+        2,
+        1
+      ],
+      "label": "Film workspace",
+      "sublabel": "One folder per film",
+      "type": "database",
+      "does": "Keeps the film. Everything about it, its source, its material and its evidence, lives in one folder on your machine.",
+      "files": [
+        "src/core/"
+      ],
+      "inside": [
+        {
+          "id": "core-manifest",
+          "label": "The manifest",
+          "does": "One file, thesium.json, that says what the film is: engine, size, timing, sound and tunables.",
+          "files": [
+            "src/core/manifest.js"
+          ]
+        },
+        {
+          "id": "core-workspace",
+          "label": "Film folders",
+          "does": "Creates the folder, writes the brief, the plan and the house rules, and finds it again.",
+          "files": [
+            "src/core/workspace.js"
+          ]
+        },
+        {
+          "id": "core-paths",
+          "label": "Paths",
+          "does": "Resolves every path and refuses the ones that would leave the film folder.",
+          "files": [
+            "src/core/paths.js"
+          ]
+        },
+        {
+          "id": "core-proc",
+          "label": "Process control",
+          "does": "Runs the outside programs and reports what they said.",
+          "files": [
+            "src/core/proc.js"
+          ]
+        },
+        {
+          "id": "core-disk",
+          "label": "Disk and vendor",
+          "does": "Checks that the drive has room, and fetches optional browser libraries once.",
+          "files": [
+            "src/core/disk.js",
+            "src/core/vendor.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kit",
+      "place": [
+        2,
+        5
+      ],
+      "label": "In-film kit",
+      "sublabel": "Copied into every film",
+      "type": "backend",
+      "does": "The helpers the film carries with it, so a film renders on its own machine without Thesium's source tree.",
+      "files": [
+        "kit/"
+      ],
+      "inside": [
+        {
+          "id": "kit-web",
+          "label": "Web motion kit",
+          "does": "Motion vocabulary for a web film: easing, reveals and the timeline helpers.",
+          "files": [
+            "kit/web/motion.js",
+            "kit/web/media.js",
+            "kit/web/post.js"
+          ]
+        },
+        {
+          "id": "kit-synth",
+          "label": "Score synth",
+          "does": "Writes the film's music: drums, basses, pads, arps and the mix bus.",
+          "files": [
+            "kit/audio/synth.py"
+          ]
+        },
+        {
+          "id": "kit-voice",
+          "label": "Voice kit",
+          "does": "The speech tools the narration command uses.",
+          "files": [
+            "kit/audio/voice.py",
+            "kit/audio/audiotools.py"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "examples",
+      "place": [
+        3,
+        1
+      ],
+      "label": "Examples",
+      "sublabel": "Films and their source",
+      "type": "frontend",
+      "does": "Shows finished films and the code behind them. Each one proves that the same plan works on another engine.",
+      "files": [
+        "examples/thesium-launch/film/build.jsx",
+        "examples/thesium-voice/tools/data.mjs",
+        "examples/thesium-launch-hyperframes/audio/score.py",
+        "examples/thesium-launch-remotion/audio/score.py"
+      ],
+      "inside": [
+        {
+          "id": "examples-launch",
+          "label": "The launch film",
+          "does": "A 30-second launch film, made on EffectCraft through Thesium.",
+          "files": [
+            "examples/thesium-launch/film/build.jsx"
+          ]
+        },
+        {
+          "id": "examples-voice",
+          "label": "Hears every word",
+          "does": "A 24-second narrated film, drawn from Thesium's own check of its voice-over.",
+          "files": [
+            "examples/thesium-voice/tools/data.mjs"
+          ]
+        },
+        {
+          "id": "examples-more",
+          "label": "Two more engines",
+          "does": "The launch film again, this time on HyperFrames and on Remotion.",
+          "files": [
+            "examples/thesium-launch-hyperframes/audio/score.py",
+            "examples/thesium-launch-remotion/audio/score.py"
+          ]
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-director-cli",
+      "from": "director",
+      "to": "cli",
+      "label": "calls",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-cli-ops",
+      "from": "cli",
+      "to": "ops",
+      "label": "operations",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-mcp-ops",
+      "from": "mcp",
+      "to": "ops",
+      "label": "same operations"
+    },
+    {
+      "id": "c-studio-ops",
+      "from": "studio",
+      "to": "ops",
+      "label": "preview and master"
+    },
+    {
+      "id": "c-ops-core",
+      "from": "ops",
+      "to": "core",
+      "label": "thesium.json"
+    },
+    {
+      "id": "c-ops-engines",
+      "from": "ops",
+      "to": "engines",
+      "label": "frame at t",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-engines-render",
+      "from": "engines",
+      "to": "render",
+      "label": "frames",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-render-browser",
+      "from": "render",
+      "to": "browser",
+      "label": "Chrome over CDP"
+    },
+    {
+      "id": "c-render-media",
+      "from": "render",
+      "to": "media",
+      "label": "FFmpeg",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-ops-media",
+      "from": "ops",
+      "to": "media",
+      "label": "mix and measure"
+    },
+    {
+      "id": "c-ops-review",
+      "from": "ops",
+      "to": "review",
+      "label": "quality gates"
+    },
+    {
+      "id": "c-ops-kit",
+      "from": "ops",
+      "to": "kit",
+      "label": "copies into film",
+      "variant": "dashed"
+    },
+    {
+      "id": "c-director-kit",
+      "from": "director",
+      "to": "kit",
+      "label": "uses",
+      "variant": "dashed"
+    },
+    {
+      "id": "c-director-examples",
+      "from": "director",
+      "to": "examples",
+      "label": "learns from",
+      "variant": "dashed"
+    }
+  ]
+}

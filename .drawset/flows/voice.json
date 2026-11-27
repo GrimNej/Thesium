@@ -1,0 +1,64 @@
+{
+  "id": "voice",
+  "title": "Ship a film with narration",
+  "summary": "Lines speak locally. Whisper transcribes them and compares them with the script. Then the music steps aside.",
+  "participants": [
+    {
+      "id": "director",
+      "label": "Director",
+      "type": "external"
+    },
+    {
+      "id": "ops",
+      "label": "Operations",
+      "type": "backend"
+    },
+    {
+      "id": "media",
+      "label": "Media and sound",
+      "type": "backend"
+    }
+  ],
+  "phases": [
+    {
+      "label": "Speak",
+      "steps": [
+        {
+          "from": "director",
+          "to": "ops",
+          "label": "write the timed lines"
+        },
+        {
+          "from": "ops",
+          "to": "media",
+          "label": "Kokoro speaks each line"
+        }
+      ]
+    },
+    {
+      "label": "Hear",
+      "steps": [
+        {
+          "from": "ops",
+          "to": "media",
+          "label": "transcribe and compare words"
+        }
+      ]
+    },
+    {
+      "label": "Mix",
+      "steps": [
+        {
+          "from": "ops",
+          "to": "media",
+          "label": "duck the music under the voice"
+        },
+        {
+          "from": "media",
+          "to": "director",
+          "label": "the mix and its numbers"
+        }
+      ]
+    }
+  ]
+}

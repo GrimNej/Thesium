@@ -1,0 +1,32 @@
+[
+  {
+    "id": "Q-1",
+    "question": "Why does the MCP server offer write_file when the director can already edit files?",
+    "context": "The server gives clients without a shell the same studio. A file write inside the film folder is also the plainest route to a mistake.",
+    "options": [
+      "Keep it, scoped to the film folder",
+      "Make the server read-only",
+      "Let each client opt in"
+    ]
+  },
+  {
+    "id": "Q-2",
+    "question": "Should `make` keep running Claude Code headless as the only director?",
+    "context": "The director is a Claude Code session with the Thesium plugin. The skill, the critic and the MCP server all come from this install.",
+    "options": [
+      "Keep Claude Code only",
+      "Accept any agent that speaks the MCP tools",
+      "Add a built-in agent loop in Node"
+    ]
+  },
+  {
+    "id": "Q-3",
+    "question": "Should every film keep its own copy of the kit?",
+    "context": "Thesium copies the kit into each film. The film then renders without Thesium's source tree, and `thesium sync` refreshes the copy.",
+    "options": [
+      "Keep the copy",
+      "Reference the shared install",
+      "Copy on demand"
+    ]
+  }
+]

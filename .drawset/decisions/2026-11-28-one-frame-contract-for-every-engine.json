@@ -1,0 +1,36 @@
+{
+  "id": "D-01",
+  "area": "Architecture",
+  "title": "One frame contract for every engine",
+  "chose": "A single contract where an engine draws the frame at time t",
+  "over": [
+    {
+      "name": "A separate command set per engine",
+      "why": "Each renderer would need its own stills, previews, checks and masters."
+    },
+    {
+      "name": "A plugin API for each renderer",
+      "why": "It would tie Thesium to the internals of each engine instead of to what it can draw."
+    }
+  ],
+  "because": "Every other feature rests on drawing one frame. A new engine gets the whole studio by implementing frame alone.",
+  "tradeoff": "An engine that cannot draw one frame on demand cannot join. Some engines need a slow path for it.",
+  "reversibility": "hard",
+  "status": "accepted",
+  "provenance": "inferred",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "engines",
+    "render"
+  ],
+  "refs": [
+    "src/engines/index.js"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "src/engines/index.js",
+    "docs/BLUEPRINT.md section 3"
+  ],
+  "needsConfirm": true
+}

@@ -1,0 +1,73 @@
+{
+  "summary": "",
+  "items": [
+    {
+      "id": "S-1",
+      "title": "A web film makes no request outside the loopback server",
+      "detail": "The web engine fails every request that is not to the local server, so a film's source cannot fetch anything while it renders.",
+      "status": "ok",
+      "components": [
+        "engines",
+        "render"
+      ],
+      "provenance": "inferred",
+      "code": [
+        "k-offline"
+      ]
+    },
+    {
+      "id": "S-2",
+      "title": "No path can leave the film folder",
+      "detail": "Thesium resolves every workspace path and refuses the ones that point outside the film folder.",
+      "status": "ok",
+      "components": [
+        "core"
+      ],
+      "provenance": "inferred",
+      "code": [
+        "k-inside"
+      ]
+    },
+    {
+      "id": "S-3",
+      "title": "The studio serves only finished media",
+      "detail": "It binds to 127.0.0.1 and mounts only out, review and assets.",
+      "status": "ok",
+      "components": [
+        "studio"
+      ],
+      "provenance": "inferred",
+      "code": [
+        "k-served"
+      ]
+    },
+    {
+      "id": "S-4",
+      "title": "No secret in the code or its history",
+      "detail": "A gitleaks scan of the tree and the git history finds nothing.",
+      "status": "ok",
+      "components": [
+        "core"
+      ],
+      "provenance": "inferred",
+      "refs": [
+        "src/",
+        "kit/",
+        "cli/"
+      ]
+    },
+    {
+      "id": "S-5",
+      "title": "Narration models come from the person, not the film",
+      "detail": "Kokoro downloads once. Thesium checks the file against a pinned size and SHA-256 before it uses it.",
+      "status": "watch",
+      "components": [
+        "ops"
+      ],
+      "provenance": "inferred",
+      "code": [
+        "k-pinned"
+      ]
+    }
+  ]
+}

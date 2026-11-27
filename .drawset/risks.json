@@ -1,0 +1,44 @@
+[
+  {
+    "id": "R-1",
+    "severity": "medium",
+    "title": "A long render can fill the disk",
+    "mitigation": "Thesium estimates the size of a native image sequence and stops with a clear message before the drive fills.",
+    "components": [
+      "render",
+      "media"
+    ],
+    "provenance": "inferred"
+  },
+  {
+    "id": "R-2",
+    "severity": "medium",
+    "title": "Whisper misses a name the model invented",
+    "mitigation": "Thesium gives the transcription a second pass with the capitalised words. Words still missed show the phonemes Kokoro used.",
+    "components": [
+      "ops"
+    ],
+    "provenance": "inferred"
+  },
+  {
+    "id": "R-3",
+    "severity": "medium",
+    "title": "EffectCraft masters are slow",
+    "mitigation": "Thesium renders half-scale previews while building. The showcase film's 30 s master took 527 s on a 12-thread Windows machine.",
+    "components": [
+      "engines"
+    ],
+    "provenance": "inferred"
+  },
+  {
+    "id": "R-4",
+    "severity": "low",
+    "title": "A film depends on a model session that can stop",
+    "mitigation": "The film folder holds the plan, the source and the evidence, so `thesium make --continue` resumes where the session stopped.",
+    "components": [
+      "ops",
+      "director"
+    ],
+    "provenance": "inferred"
+  }
+]

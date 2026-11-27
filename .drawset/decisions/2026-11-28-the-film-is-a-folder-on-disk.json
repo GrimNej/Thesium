@@ -1,0 +1,36 @@
+{
+  "id": "D-03",
+  "area": "Data",
+  "title": "The film is a folder on disk",
+  "chose": "One self-contained folder per film, with thesium.json as its manifest",
+  "over": [
+    {
+      "name": "An app server with a database",
+      "why": "It would put a server and a schema between the person and their film."
+    },
+    {
+      "name": "A cloud workspace",
+      "why": "The film would travel off the machine that made it."
+    }
+  ],
+  "because": "Films stay local and private, and any agent can read a plain folder without a tool.",
+  "tradeoff": "There is no shared state between films, so every film repeats its own kit copy.",
+  "reversibility": "hard",
+  "status": "accepted",
+  "provenance": "inferred",
+  "date": "2026-11-28",
+  "by": "Drawset adoption",
+  "components": [
+    "core"
+  ],
+  "refs": [
+    "src/core/workspace.js",
+    "src/core/manifest.js"
+  ],
+  "confidence": "high",
+  "inferredFrom": [
+    "src/core/workspace.js",
+    "docs/BLUEPRINT.md section 5"
+  ],
+  "needsConfirm": true
+}
